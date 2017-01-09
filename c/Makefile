@@ -1,0 +1,14 @@
+# Makefile for Linux
+CC = gcc -Wall
+PROGS = kconsumer
+CFLAGS = 
+IFLAGS = -I.
+SRCS = consumer.c
+
+all: $(PROGS)
+
+kconsumer: consumer.c
+	$(CC) $(SRCS) $(IFLAGS) -o $(PROGS) $(CFLAGS) `pkg-config --libs --cflags rdkafka` `pkg-config --libs --cflags libcjson` `pkg-config --libs --cflags libpq`
+
+clean:
+	rm -rf $(PROGS)
