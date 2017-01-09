@@ -1,0 +1,41 @@
+{
+    "content_connection": {
+        "type": "static",
+        "hostname": "db-pgsql.tgburrin.net",
+        "ssl": false,
+        "port": 5432,
+        "username": "tgburrin",
+        "password": "junk_password",
+        "database": "tgburrin"
+    },
+
+    "content_table": {
+        "name": "content",
+        "pk": ["id"],
+        "unique": {
+            "by_url": ["url"]
+        }
+    },
+
+    "pageview_connection": {
+        "brokers": ["kafka.tgburrin.net:9092"],
+        "topic": "messages"
+    },
+
+    "content_schema": {
+        "legend": {
+            "id": {"type": "string", "additional_validation": "UUID" },
+            "name": {"type": "string", "additional_validation": { "length": [1,"max"] } },
+            "url": {"type": "string", "additional_validation": { "length": [1, 255] } }
+        },
+        "required_fields": {
+            "default": {},
+            "initial": {},
+            "all": {},
+            "insert": { "fields": ["name","url"] },
+            "delete": { "fields": ["id"] },
+            "replace": { "fields": ["id", "name", "url"] },
+            "update": { "fields": ["id"], "require_an_optional": true }
+        }
+    }
+}
