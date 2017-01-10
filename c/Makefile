@@ -1,7 +1,7 @@
 # Makefile for Linux
 CC = gcc -Wall
 PROGS = kconsumer
-CFLAGS = 
+CFLAGS = -std=gnu99
 IFLAGS = -I.
 SRCS = consumer.c
 

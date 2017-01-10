@@ -89,3 +89,20 @@ create or replace function content_pageview ( i uuid ) returns bigint as $$
         return rv;
     end
 $$ language plpgsql;
+
+create or replace function content_pageview ( i uuid, pvd timestamp ) returns bigint as $$
+    declare
+        rv bigint;
+    begin
+        with pv_count as (
+            insert into content_counter as cc
+                (id, pageview_date, pageview_count)
+            values
+                ($1,date($2),1)
+            on conflict (pageview_date, id) do update set
+                pageview_count = cc.pageview_count + 1
+            returning cc.*
+        ) select pageview_count into strict rv from pv_count;
+        return rv;
+    end
+$$ language plpgsql;
