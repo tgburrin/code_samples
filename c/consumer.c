@@ -32,10 +32,10 @@ void graceful_shutdown ();
 // Configuration related
 char *set_config_section_str ( cJSON *, char * );
 int set_config_section_int ( cJSON *, char * );
-char *get_postgres_uri ( );
+void get_postgres_uri ( char * );
 
 // Postgres related
-void init_postgres ( char * );
+void init_postgres ();
 uint64_t get_last_source_ref ();
 void set_last_source_ref ( uint64_t );
 void update_pageview_count ( char * );
@@ -84,7 +84,10 @@ void error_exit(const char *errstr) {
     exit(EXIT_FAILURE);
 }
 
-void init_postgres (char *uri) {
+void init_postgres () {
+    char uri[1024];
+    get_postgres_uri(uri);
+
     dbh = PQconnectdb(uri);
 
     if ( PQstatus(dbh) != CONNECTION_OK )
@@ -404,8 +407,7 @@ int set_config_section_int ( cJSON *base, char *section ) {
     return rv;
 }
 
-char *get_postgres_uri () {
-    char *uri = (char *)malloc(1024);
+void get_postgres_uri ( char *uri ) {
     strcpy(uri, "postgres://");
 
     if ( postgres_config.username != NULL ) {
@@ -426,8 +428,6 @@ char *get_postgres_uri () {
 
     if ( postgres_config.database != NULL )
         sprintf(uri+strlen(uri), "/%s", postgres_config.database);
-
-    return uri;
 }
 
 void graceful_shutdown () {
@@ -476,7 +476,7 @@ int main (int argc, char **argv) {
     clock_gettime(CLOCK_REALTIME, &now);
 
     // initialize the database connection
-    init_postgres(get_postgres_uri());
+    init_postgres();
 
     // retrieve our source reference
     source_ref = get_last_source_ref();
