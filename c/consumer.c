@@ -370,6 +370,9 @@ void parse_config ( char *config_file ) {
         postgres_config.database = set_config_section_str(section, "database");
         postgres_config.port     = set_config_section_int(section, "port");
     }
+
+    if ( root != NULL )
+        cJSON_Delete(root);
 }
 
 char *set_config_section_str ( cJSON *base, char *section ) {
