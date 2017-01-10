@@ -24,7 +24,7 @@ create or replace function get_message_ref ( ) returns bigint as $$
     declare
         rv bigint;
     begin
-        select source_ref_int into rv from source_ref where source_id = 'message_queue';
+        select source_ref_int into rv from source_ref where source_id = 'content_pv_queue';
         return rv;
     end
 $$ language plpgsql;
@@ -34,10 +34,10 @@ create or replace function set_message_ref ( sr bigint ) returns bigint as $$
         update source_ref set
             source_ref_int = sr
         where
-            source_id = 'message_queue';
+            source_id = 'content_pv_queue';
 
         if NOT FOUND THEN
-            insert into source_ref (source_id, source_ref_int) values ( 'message_queue', sr );
+            insert into source_ref (source_id, source_ref_int) values ( 'content_pv_queue', sr );
         end if;
         return sr;
     end

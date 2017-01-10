@@ -5,6 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <signal.h>
 
 #include <libgen.h>
 
@@ -26,18 +27,21 @@
 // General use
 char *print_usage ( char * );
 void error_exit( const char * );
+void graceful_shutdown ();
 
 // Configuration related
 char *set_config_section_str ( cJSON *, char * );
 int set_config_section_int ( cJSON *, char * );
 char *get_postgres_uri ( );
 
+// Postgres related
 void init_postgres ( char * );
 uint64_t get_last_source_ref ();
 void set_last_source_ref ( uint64_t );
 void update_pageview_count ( char * );
 
-void init_kafka ( uint64_t );
+// Kafka related
+void init_kafka ( uint64_t * );
 
 struct KafkaConfig {
     char broker_list[2048];
@@ -63,8 +67,13 @@ static cJSON *jsondoc;
 static PGconn *dbh;
 static PGresult *pgresult;
 
-static uint64_t committed_count = 0;
+static uint64_t uncommitted_count = 0;
+static uint64_t batch_commit_size = 1000;
+static volatile uint32_t uncommitted_timeout_sec = 10;
 static struct timespec committed_time;
+
+static volatile bool proc_running = false;
+static volatile int exit_status = EXIT_SUCCESS;
 
 void error_exit(const char *errstr) {
     fprintf(stderr, "ERROR: %s\n", errstr);
@@ -82,6 +91,26 @@ void init_postgres (char *uri) {
         error_exit(PQerrorMessage(dbh));
 }
 
+void start_transaction () {
+    pgresult = PQexec(dbh, "BEGIN");
+    if ( PQresultStatus(pgresult) != PGRES_COMMAND_OK ) {
+        fprintf(stderr, "Could not begin transaction on postgres server\n");
+        exit_status = EXIT_FAILURE;
+        proc_running = false;
+    }
+    PQclear(pgresult);
+}
+
+void commit_transaction () {
+    pgresult = PQexec(dbh, "COMMIT");
+    if ( PQresultStatus(pgresult) != PGRES_COMMAND_OK ) {
+        fprintf(stderr, "Could not begin transaction on postgres server\n");
+        exit_status = EXIT_FAILURE;
+        proc_running = false;
+    }
+    PQclear(pgresult);
+}
+
 uint64_t get_last_source_ref () {
     uint64_t rv;
 
@@ -90,7 +119,7 @@ uint64_t get_last_source_ref () {
     if ( PQresultStatus(pgresult) != PGRES_TUPLES_OK )
         error_exit(PQresultErrorMessage(pgresult));
 
-    fprintf(stdout, "%d rows returned\n", PQntuples(pgresult));
+    //fprintf(stdout, "%d rows returned\n", PQntuples(pgresult));
 
     if ( PQgetisnull(pgresult, 0, 0) )
         return RD_KAFKA_OFFSET_BEGINNING;
@@ -153,6 +182,33 @@ void init_kafka (uint64_t *source_ref) {
         rd_kafka_resp_err_t err = rd_kafka_last_error();
         error_exit(rd_kafka_err2str(err));
     }
+
+    if ( *source_ref != RD_KAFKA_OFFSET_BEGINNING ) {
+        fprintf(stdout, "Finding last message we left off at: %"PRId64"\n", *source_ref);
+
+        rd_kafka_message_t *msg;
+        bool found_first_msg = false;
+        while ( true ) {
+            rd_kafka_poll(rk, 0);
+            if ( (msg = rd_kafka_consume(msg_t, 0, 250)) ) {
+                if ( msg->err && msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF )
+                    break;
+
+                if ( msg->len > 0 && msg->offset == *source_ref ) {
+                    found_first_msg = true;
+                    break;
+                }
+            }
+        }
+
+        if ( !found_first_msg ) {
+            char err[1024];
+            sprintf(err, "Could not find message with source ref %"PRId64, *source_ref);
+            error_exit(err);
+        } else {
+            fprintf(stdout, "Located.  We didn't fall off of the queue\n");
+        }
+    }
 }
 
 void set_last_source_ref ( uint64_t ref ) {
@@ -201,7 +257,8 @@ void update_pageview_count ( char *id ) {
 }
 
 char *print_usage( char *program_name ) {
-    char message[1024];
+    char *message  = (char *)malloc(1024); // We can be sloppy about cleaning this up since it happens on exit()
+
     sprintf(message, "Usage: %s <options>\n", program_name);
     sprintf(message + strlen(message), "\t-c <config file> (required)\n");
     sprintf(message + strlen(message), "\t-h this help menu\n");
@@ -246,6 +303,11 @@ void parse_config ( char *config_file ) {
     }
 
     cJSON *section;
+
+    if ( (section = cJSON_GetObjectItem(root, "batch_commit_size")) != NULL && 
+         section->type == cJSON_Number &&
+         section->valueint > 0 )
+        batch_commit_size = section->valueint;
 
     // Pageview details
     if ( (section = cJSON_GetObjectItem(root, "pageview_connection")) == NULL ) {
@@ -355,7 +417,7 @@ char *get_postgres_uri () {
     if ( postgres_config.hostname != NULL ) {
         strcpy(uri+strlen(uri), postgres_config.hostname);
 
-        if ( postgres_config.port != NULL && postgres_config.port > 0 )
+        if ( postgres_config.port != 0 && postgres_config.port > 0 )
             sprintf(uri+strlen(uri), ":%d", postgres_config.port);
     }
 
@@ -365,10 +427,15 @@ char *get_postgres_uri () {
     return uri;
 }
 
+void graceful_shutdown () {
+    proc_running = false;
+}
+
 int main (int argc, char **argv) {
     rd_kafka_message_t *msg;
-    int counter = 0;
     uint64_t source_ref;
+
+    static struct timespec now;
 
     char *config_file = 0;
 
@@ -403,6 +470,7 @@ int main (int argc, char **argv) {
 
     // record the time that we started
     clock_gettime(CLOCK_REALTIME, &committed_time);
+    clock_gettime(CLOCK_REALTIME, &now);
 
     // initialize the database connection
     init_postgres(get_postgres_uri());
@@ -416,8 +484,15 @@ int main (int argc, char **argv) {
 
     fprintf(stdout, "%s: %s\n", rd_kafka_name(rk), rd_kafka_memberid(rk));
 
-    while( true ) {
+    signal(SIGINT, graceful_shutdown);
+
+    proc_running = true;
+    uint64_t lastoffset = 0;
+
+    while( proc_running ) {
         rd_kafka_poll(rk, 0);
+
+        clock_gettime(CLOCK_REALTIME, &now);
 
         if ( (msg = rd_kafka_consume(msg_t, 0, 250)) ) {
             if ( msg->err && msg->err != RD_KAFKA_RESP_ERR__PARTITION_EOF ) {
@@ -430,21 +505,13 @@ int main (int argc, char **argv) {
                     fprintf(stderr, "Consume error: %s: %s", rd_kafka_err2str(msg->err),
                                                              rd_kafka_message_errstr(msg));
             } else if ( msg->err && msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF ) {
-                set_last_source_ref(msg->offset);
-                fprintf(stdout, "End of queue reached for %s at offset %"PRId64"\n",
-                                    rd_kafka_topic_name(msg->rkt),
-                                    msg->offset);
-                fprintf(stdout, "Consumed %d messages\n", counter);
-                counter = 0;
+                //set_last_source_ref(msg->offset);
+                fprintf(stdout, "End of queue reached for %s\n", rd_kafka_topic_name(msg->rkt));
+                fprintf(stdout, "Consumed %"PRId64" messages\n", uncommitted_count);
             }
 
             if ( msg->len > 0 ) {
-                counter++;
-
-                //fprintf(stdout, "Message for %s of %"PRId32" bytes at offset %"PRId64"\n",
-                //                                                         rd_kafka_topic_name(msg->rkt),
-                //                                                         msg->len,
-                //                                                         msg->offset);
+                lastoffset = msg->offset;
 
                 if ( !(jsondoc = cJSON_Parse(msg->payload)) ) {
                     fprintf(stderr, "Can't parse msg: %s\n", (char *)msg->payload);
@@ -458,30 +525,56 @@ int main (int argc, char **argv) {
                 cJSON *id = cJSON_GetObjectItem(jsondoc, "id");
                 if ( id == 0 )
                     continue;
-                //printf("ID: %s (%"PRId64")\n", (char *)id->valuestring, msg->offset);
+
+                if ( uncommitted_count == 0 ) {
+                    clock_gettime(CLOCK_REALTIME, &committed_time);
+                    start_transaction();
+                }
+                uncommitted_count++;
 
                 update_pageview_count(id->valuestring);
-
-                // commit & update source ref
 
                 cJSON_Delete(jsondoc);
             }
 
             rd_kafka_message_destroy(msg);
-        } else {
-            //printf("Polling...\n");
+        }
+
+        if ( uncommitted_count > 0 ) {
+            bool do_commit = false;
+
+            if ( uncommitted_count % batch_commit_size == 0 ) {
+                fprintf(stdout, "Committeding %"PRId64" based on batch\n", uncommitted_count);
+                do_commit = true;
+            } else if ( (now.tv_sec - committed_time.tv_sec) > uncommitted_timeout_sec ) {
+                fprintf(stdout, "Committeding %"PRId64" based on time\n", uncommitted_count);
+                do_commit = true;
+            }
+
+            if ( do_commit ) {           
+                set_last_source_ref(lastoffset);
+                commit_transaction();
+
+                uncommitted_count = 0;
+            }
         }
     }
 
-    printf("Doing cleanup...\n");
+    printf("Stopping consumer...\n");
+    rd_kafka_consume_stop(msg_t, 0);
 
-    rd_kafka_consume_stop(msg_t, RD_KAFKA_PARTITION_UA);
+    printf("Removing topic...\n");
     rd_kafka_topic_destroy(msg_t);
-    rd_kafka_destroy(rk);
 
+    /* Some sort of bug here: this hangs indefinitely.
+       It may be trying to store the offset on the server. */
+    //printf("Closing connection and releasing resources...\n");
+    //rd_kafka_destroy(rk);
+
+    printf("Cleaning up Postgres...\n");
     if ( dbh )
         PQfinish(dbh);
 
     printf("Done\n");
-    return 0;
+    return exit_status;
 }

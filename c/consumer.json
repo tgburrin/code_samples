@@ -1,0 +1,18 @@
+{
+    "batch_commit_size": 1000,
+
+    "content_connection": {
+        "type": "static",
+        "hostname": "db-pgsql.tgburrin.net",
+        "port": 5432,
+        "username": "tgburrin",
+        "password": "junk_password",
+        "database": "tgburrin"
+    },
+
+    "pageview_connection": {
+        "brokers": ["kafka.tgburrin.net:9092"],
+        "topic": "messages",
+        "debug": false
+    }
+}
