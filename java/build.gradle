@@ -1,0 +1,25 @@
+allprojects {
+    task hello {
+        doLast { task ->
+            println "Done with $task.project.name"
+        }
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    repositories {
+       mavenCentral()
+    }
+
+    dependencies {
+        testCompile 'junit:junit:4.12'
+    }
+
+    version = '1.0'
+
+    jar {
+        manifest.attributes provider: 'gradle'
+    }
+}
