@@ -24,6 +24,8 @@
 // https://github.com/DaveGamble/cJSON.git
 #include <cjson/cJSON.h>
 
+#define KAFKA_POLL_TIMEOUT_MS 10
+
 // General use
 char *print_usage ( char * );
 void error_exit( const char * );
@@ -193,7 +195,7 @@ void init_kafka (uint64_t *source_ref) {
         bool found_first_msg = false;
         while ( true ) {
             rd_kafka_poll(rk, 0);
-            if ( (msg = rd_kafka_consume(msg_t, 0, 250)) ) {
+            if ( (msg = rd_kafka_consume(msg_t, 0, KAFKA_POLL_TIMEOUT_MS)) ) {
                 if ( msg->err && msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF )
                     break;
 
@@ -497,7 +499,7 @@ int main (int argc, char **argv) {
 
         clock_gettime(CLOCK_REALTIME, &now);
 
-        if ( (msg = rd_kafka_consume(msg_t, 0, 250)) ) {
+        if ( (msg = rd_kafka_consume(msg_t, 0, KAFKA_POLL_TIMEOUT_MS)) ) {
             if ( msg->err && msg->err != RD_KAFKA_RESP_ERR__PARTITION_EOF ) {
                 if ( msg->rkt )
                     fprintf(stderr, "%s: %s at offset %"PRId64"\n",
