@@ -29,6 +29,7 @@ var apiVersion = "1"
 var queueProducer sarama.SyncProducer
 var queueTopic string
 
+var debugOutput = false
 
 func sendMessage ( msgInput map[string]interface{} ) ( err error ) {
     brv, err := json.Marshal(msgInput)
@@ -40,7 +41,9 @@ func sendMessage ( msgInput map[string]interface{} ) ( err error ) {
     if partition, offset, err := queueProducer.SendMessage(msg); err != nil {
         return err
     } else {
-        log.Printf("> message sent to partition %d at offset %d\n", partition, offset)
+        if debugOutput {
+            log.Printf("> message sent to partition %d at offset %d\n", partition, offset)
+        }
     }
 
     return err
@@ -581,6 +584,11 @@ func main () {
                     "/pageview/{id:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}}",
                      processPageviewHandler)
 
-    loggedRouter := handlers.LoggingHandler(os.Stdout, smux)
+    var loggedRouter http.Handler
+    if debugOutput {
+        loggedRouter = handlers.LoggingHandler(os.Stdout, smux)
+    } else {
+        loggedRouter = handlers.LoggingHandler(ioutil.Discard, smux)
+    }
     log.Fatal(http.ListenAndServe(":8080", loggedRouter))
 }

@@ -14,6 +14,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <pthread.h>
 
 // https://www.postgresql.org/
 #include <libpq-fe.h>
@@ -25,11 +26,13 @@
 #include <cjson/cJSON.h>
 
 #define KAFKA_POLL_TIMEOUT_MS 10
+#define STATS_TIMER_SEC 5
 
 // General use
 char *print_usage ( char * );
 void error_exit( const char * );
 void graceful_shutdown ();
+void record_timer ();
 
 // Configuration related
 char *set_config_section_str ( cJSON *, char * );
@@ -73,9 +76,37 @@ static uint64_t uncommitted_count = 0;
 static uint64_t batch_commit_size = 1000;
 static volatile uint32_t uncommitted_timeout_sec = 10;
 static struct timespec committed_time;
+static uint64_t total_sent = 0;
+static uint64_t total_committed = 0;
 
 static volatile bool proc_running = false;
 static volatile int exit_status = EXIT_SUCCESS;
+
+static pthread_mutex_t counter_lck = PTHREAD_MUTEX_INITIALIZER;
+
+void record_timer ( ) {
+    uint64_t mycount_s = 0;
+    uint64_t mycount_c = 0;
+
+    while(proc_running) {
+
+        pthread_mutex_lock(&counter_lck);
+        uint64_t diff_s = total_sent - mycount_s;
+        mycount_s = total_sent;
+
+        uint64_t diff_c = total_committed - mycount_c;
+        mycount_c = total_committed;
+        pthread_mutex_unlock(&counter_lck);
+
+        printf("%lf/s sent, %lf/s committed\n",
+            (double)diff_s/(double)STATS_TIMER_SEC,
+            (double)diff_c/(double)STATS_TIMER_SEC);
+
+        sleep(STATS_TIMER_SEC);
+    }
+
+    pthread_exit(NULL);
+}
 
 void error_exit(const char *errstr) {
     fprintf(stderr, "ERROR: %s\n", errstr);
@@ -491,6 +522,11 @@ int main (int argc, char **argv) {
 
     signal(SIGINT, graceful_shutdown);
 
+    pthread_mutex_init(&counter_lck,NULL);
+
+    pthread_t record_counter;
+    pthread_create( &record_counter, NULL, (void *)(&record_timer),  NULL);
+
     proc_running = true;
     uint64_t lastoffset = 0;
 
@@ -539,6 +575,10 @@ int main (int argc, char **argv) {
 
                 update_pageview_count(id->valuestring);
 
+                pthread_mutex_lock(&counter_lck);
+                total_sent++;
+                pthread_mutex_unlock(&counter_lck);
+
                 cJSON_Delete(jsondoc);
             }
 
@@ -556,9 +596,13 @@ int main (int argc, char **argv) {
                 do_commit = true;
             }
 
-            if ( do_commit ) {           
+            if ( do_commit ) {
                 set_last_source_ref(lastoffset);
                 commit_transaction();
+
+                pthread_mutex_lock(&counter_lck);
+                total_committed += uncommitted_count;
+                pthread_mutex_unlock(&counter_lck);
 
                 uncommitted_count = 0;
             }
@@ -579,6 +623,9 @@ int main (int argc, char **argv) {
     printf("Cleaning up Postgres...\n");
     if ( dbh )
         PQfinish(dbh);
+
+    pthread_join(record_counter, NULL);
+    pthread_mutex_destroy(&counter_lck);
 
     printf("Done\n");
     return exit_status;
