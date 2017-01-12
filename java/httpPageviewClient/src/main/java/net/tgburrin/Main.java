@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.commons.io.IOUtils;
 
 import org.apache.http.HttpStatus;
@@ -22,11 +24,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 
 public class Main extends Thread {
+    private static AtomicInteger msgCounter = new AtomicInteger(0);
+    private static int statsTimeSec = 5;
+
     private static String webHost = "webserver.tgburrin.net:8080";
     private static String apiVersion = "v1";
     private static String urlBase = "/"+apiVersion+"/content";
 
-    private static int numberOfClients = 8;
+    private static int numberOfClients = 48;
     private static int numberOfViews = 10000;
 
     private int threadNumber = 0;
@@ -53,6 +58,8 @@ public class Main extends Thread {
                     System.err.println("Could not post pageview: "+body);
                     System.exit(1);
                 }
+
+                msgCounter.incrementAndGet();
             } catch (IOException e) {
                 System.err.println("Could not make post request: "+e.getMessage());
                 System.exit(1);
@@ -93,6 +100,21 @@ public class Main extends Thread {
 
             ArrayList<Main> children = new ArrayList<Main>();
 
+            Thread thread = new Thread() {
+                public void run() {
+                    while ( true ) {
+                        try {
+                            Thread.sleep(statsTimeSec * 1000);
+                        } catch (InterruptedException e) {
+                            break;
+                        }
+                        int msgCount = msgCounter.getAndSet(0);
+                        System.out.println(((float)msgCount / (float)statsTimeSec)+" msgs/sec");
+                    }
+                }
+            };
+            thread.start();
+
             int cidIdx = 0;
             for ( int i = 0; i < numberOfClients; i ++ ) {
                 if ( cidIdx >= contentIds.size() )
@@ -110,6 +132,11 @@ public class Main extends Thread {
                     System.err.println("Error from child: "+e.getMessage());
                 }
             }
+
+            thread.interrupt();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {}
 
         }
 
