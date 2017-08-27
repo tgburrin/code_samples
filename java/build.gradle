@@ -18,8 +18,4 @@ subprojects {
     }
 
     version = '1.0'
-
-    jar {
-        manifest.attributes provider: 'gradle'
-    }
 }

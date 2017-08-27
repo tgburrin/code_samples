@@ -1,12 +1,25 @@
-task completeJar(type: Jar) {
-    manifest {
-        attributes 'Implementation-Title': 'Gradle Jar File Example',
-            'Implementation-Version': version,
-            'Main-Class': 'net.tgburrin.Main'
+apply plugin: 'java'
+
+jar {
+
+    archiveName = project.name + '-all' + '.jar'
+
+    from {
+
+        configurations.runtime.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+
+        configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
     }
-    baseName = project.name + '-all'
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
+
+    manifest {
+        attributes 'Main-Class': 'net.tgburrin.Main'
+    }
+
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
 }
 
 dependencies {
