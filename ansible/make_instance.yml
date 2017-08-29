@@ -1,0 +1,37 @@
+---
+#- debug: var=inst
+#
+#- debug: var=item
+#  with_sequence: start=1 end={{ inst.num }} format="{{ inst.name }}%02d"
+
+- name: Provision a set of instances
+  ec2:
+     aws_access_key: "{{ aws_access_key }}"
+     aws_secret_key: "{{ aws_secret_key }}"
+     key_name: "{{ aws_key_name }}"
+     group: default
+     instance_initiated_shutdown_behavior: "terminate"
+     instance_type: "{{ inst.instance_type if inst.instance_type is defined else instance_type }}"
+     image: "{{ ami_id }}"
+     region: "us-east-1"
+     vpc_subnet_id: "subnet-e389cbb9"
+     assign_public_ip: false
+     wait: true
+     instance_tags:
+        Name: "{{ item }}"
+        instance_type: "{{ inst.type }}"
+        automated: "true"
+  register: ec2
+  with_sequence: start=1 end={{ inst.num }} format="{{ inst.name }}%02d"
+
+#- debug: var=ec2
+
+- name: Wait for SSH to come up
+  wait_for:
+    host: "{{ item.private_ip }}"
+    port: 22
+    delay: 60
+    timeout: 320
+    state: started
+  with_items: "{{ ec2.results[0].instances }}"
+

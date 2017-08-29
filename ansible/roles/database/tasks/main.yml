@@ -1,0 +1,32 @@
+---
+- name: Install postgres
+  register: pgsql_install
+  yum: name={{ item }} state=present
+  with_items:
+    - postgresql95-server
+    - postgresql95-contrib
+
+- name: Create database
+  command: service postgresql95 initdb
+  when: pgsql_install.changed
+
+- name: Add listen address
+  lineinfile:
+    dest: "{{ pgsql_data_path }}/postgresql.conf"
+    line: "listen_addresses = '*'"
+    insertbefore: "listen_addresses = 'localhost'"
+
+- name: Fix HBA
+  replace:
+    path: "{{ pgsql_data_path }}/pg_hba.conf"
+    regexp: '(^local.*|^host.*)(peer$|ident$)'
+    replace: '\1trust'
+
+- name: Start postgres
+  service: name=postgresql95 state=started enabled=yes
+
+- name: Create Users
+  script: create_users.sh
+
+- name: Load Objects
+  shell: "psql -U tgburrin < /installs/code_samples/pgsql/content.sql"

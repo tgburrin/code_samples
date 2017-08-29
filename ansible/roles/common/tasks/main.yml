@@ -1,0 +1,40 @@
+---
+- setup:
+- name: "Add to hosts"
+  lineinfile:
+    dest: "/etc/hosts"
+    line: "{{ item }} {{ hostvars[item]['ec2_tag_Name'] }}.ec2.internal {{ hostvars[item]['ec2_tag_Name'] }}"
+  with_items: "{{ groups['tag_automated_true'] }}"
+
+- name: "Add standard packages"
+  package: name="{{ item }}" state=latest
+  with_items:
+    - git
+    - bind-utils
+
+- name: "Get git repository"
+  file: path=/installs state=directory
+- git: repo=https://github.com/tgburrin/code_samples.git dest=/installs/code_samples
+- copy:
+    dest: "/root/.ssh/id_rsa"
+    content: "{{ aws_internal_key }}"
+    owner: root
+    group: root
+    mode: 0600
+- copy:
+    dest: "/root/.ssh/"
+    src: "{{ item.name }}"
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  with_items:
+      - { name: id_rsa.pub, mode: "0644" }
+      - { name: config, mode: "0644" }
+      - { name: authorized_keys, mode: "0644" }
+- lineinfile:
+    path: "/etc/ssh/sshd_config"
+    regexp: "^PermitRootLogin "
+    line: "PermitRootLogin yes"
+- service:
+    name: sshd
+    state: restarted

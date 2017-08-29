@@ -1,0 +1,15 @@
+---
+- unarchive:
+    src: "https://services.gradle.org/distributions/gradle-{{ gradle_version }}-bin.zip"
+    dest: /opt
+    remote_src: yes
+    validate_certs: no
+    creates: "/opt/gradle-{{ gradle_version }}"
+
+- lineinfile:
+    dest: /etc/profile.d/gradle.sh
+    line: "export PATH=${PATH}:/opt/gradle-{{ gradle_version }}/bin"
+    create: yes
+    mode: 0755
+    owner: root
+    group: root

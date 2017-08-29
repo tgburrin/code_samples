@@ -1,0 +1,73 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars:
+    ami_id: "ami-a4c7edb2"
+    instance_type: "t2.nano"
+
+  tasks:
+    - include: make_instance.yml
+      with_items:
+         - { name: 'database', type: 'pgsql_database', num: 1 }
+         - { name: 'kafka', type: 'kafka_queue', num: 1 }
+         - { name: 'webserver', type: 'webserver', num: 1 }
+         - { name: 'webclient', type: 'webclient', num: 1 }
+      loop_control:
+        loop_var: inst
+
+    - meta: refresh_inventory
+
+- hosts: localhost
+  tasks:
+    - name: Building hostlist
+      set_fact:
+        hostlist: "{{ hostlist|default([]) + [ { 'address': item, 'name': hostvars[item].ec2_tag_Name } ] }}"
+      with_items: "{{ groups['tag_automated_true'] }}"
+    - file: path=/tmp/ec2hosts.ns state=absent
+    - lineinfile:
+        dest: /tmp/ec2hosts.ns
+        line: "server 172.16.1.1"
+        state: present
+        create: True
+        backup: no
+    - lineinfile:
+        dest: /tmp/ec2hosts.ns
+        backup: no
+        line: "update delete {{ item.name }}.ec2.tgburrin.net. A"
+      with_items: "{{ hostlist }}"
+    - lineinfile:
+        dest: /tmp/ec2hosts.ns
+        backup: no
+        insertafter: EOF
+        line: "update add {{ item.name }}.ec2.tgburrin.net. 600 A {{ item.address }}"
+      with_items: "{{ hostlist }}"
+    - lineinfile:
+        dest: /tmp/ec2hosts.ns
+        backup: no
+        insertafter: EOF
+        line: "send"
+    - shell: "nsupdate < /tmp/ec2hosts.ns"
+
+- hosts: tag_automated_true
+  roles:
+    - common
+
+- hosts: tag_instance_type_pgsql_database
+  roles:
+    - database
+
+#- hosts: tag_instance_type_webserver
+#  roles:
+#    - golang
+#    - webserver
+#
+- hosts: tag_instance_type_kafka_queue
+  roles:
+    - java8
+
+- hosts: tag_instance_type_webclient
+  roles:
+    - java8
+    - webclient
