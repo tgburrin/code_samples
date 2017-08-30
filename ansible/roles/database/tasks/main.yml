@@ -22,6 +22,18 @@
     regexp: '(^local.*|^host.*)(peer$|ident$)'
     replace: '\1trust'
 
+- name: Add Valid Networks
+  lineinfile:
+    dest: "{{ pgsql_data_path }}/pg_hba.conf"
+    line: "host     all     all     {{ item }}      md5"
+    insertbefore: EOF
+  with_items:
+    - "172.30.0.0/24"
+    - "172.30.1.0/24"
+    - "172.16.1.0/26"
+    - "172.16.1.64/27"
+    - "172.16.1.96/27"
+
 - name: Start postgres
   service: name=postgresql95 state=started enabled=yes
 

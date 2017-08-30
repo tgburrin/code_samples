@@ -1,0 +1,16 @@
+---
+- package: name="{{ item }}" state=latest
+  with_items:
+    - golang-bin
+
+- file:
+    dest: /installs/go_packages
+    state: directory
+
+- lineinfile:
+    path: /etc/profile.d/go.sh
+    line: "export GOPATH=/installs/go_packages"
+    create: yes
+    owner: root
+    group: root
+    mode: 0755

@@ -27,7 +27,7 @@ public class Main extends Thread {
     private static AtomicInteger msgCounter = new AtomicInteger(0);
     private static int statsTimeSec = 5;
 
-    private static String webHost = "webserver.tgburrin.net:8080";
+    private static String webHost = "webserver01:8080";
     private static String apiVersion = "v1";
     private static String urlBase = "/"+apiVersion+"/content";
 

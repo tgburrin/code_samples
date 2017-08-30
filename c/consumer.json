@@ -3,7 +3,7 @@
 
     "content_connection": {
         "type": "static",
-        "hostname": "db-pgsql.tgburrin.net",
+        "hostname": "database01.ec2.internal",
         "port": 5432,
         "username": "tgburrin",
         "password": "junk_password",
@@ -11,7 +11,7 @@
     },
 
     "pageview_connection": {
-        "brokers": ["kafka.tgburrin.net:9092"],
+        "brokers": ["kafka01.ec2.internal:9092"],
         "topic": "messages",
         "debug": false
     }

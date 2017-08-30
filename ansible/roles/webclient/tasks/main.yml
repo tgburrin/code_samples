@@ -13,3 +13,8 @@
     mode: 0755
     owner: root
     group: root
+
+- shell: "source /etc/profile.d/gradle.sh && gradle build"
+  args:
+    chdir: "/installs/code_samples/java"
+    creates: "/installs/code_samples/java/httpPageviewClient/build/libs/httpPageviewClient-all.jar"

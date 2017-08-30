@@ -35,6 +35,8 @@
     path: "/etc/ssh/sshd_config"
     regexp: "^PermitRootLogin "
     line: "PermitRootLogin yes"
+  register: sshd_config
 - service:
     name: sshd
     state: restarted
+  when: sshd_config.changed

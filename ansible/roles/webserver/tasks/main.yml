@@ -1,0 +1,7 @@
+---
+- copy:
+    src: download_dependencies.sh
+    dest: /installs/
+    mode: 0755
+
+- shell: /installs/download_dependencies.sh
