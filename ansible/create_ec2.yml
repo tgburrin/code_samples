@@ -63,6 +63,7 @@
 - hosts: tag_instance_type_pgsql_database
   roles:
     - database
+    - kafka_client
 
 - hosts: tag_instance_type_webserver
   roles:

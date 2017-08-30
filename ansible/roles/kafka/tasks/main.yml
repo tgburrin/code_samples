@@ -16,6 +16,16 @@
     regexp: "^log.retention.hours"
     line: "log.retention.hours=24"
 
+- lineinfile:
+    path: "/opt/kafka_2.12-0.11.0.0/config/server.properties"
+    regexp: "^#listeners=PLAINTEXT://:9092"
+    line: "listeners=PLAINTEXT://:9092"
+
+- lineinfile:
+    path: "/opt/kafka_2.12-0.11.0.0/config/server.properties"
+    regexp: "^#advertised.listeners="
+    line: "advertised.listeners=PLAINTEXT://kafka01.ec2.internal:9092"
+
 - command: /opt/kafka_2.12-0.11.0.0/bin/zookeeper-server-start.sh -daemon /opt/kafka_2.12-0.11.0.0/config/zookeeper.properties
 
 - wait_for:
@@ -24,3 +34,7 @@
     state: started
 
 - command: /opt/kafka_2.12-0.11.0.0/bin/kafka-server-start.sh -daemon /opt/kafka_2.12-0.11.0.0/config/server.properties
+
+- shell: ./kafka-topics.sh --zookeeper localhost --create --topic messsages --partitions 1 --replication-factor 1
+  args:
+    chdir: /opt/kafka_2.12-0.11.0.0/bin

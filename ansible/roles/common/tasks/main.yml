@@ -1,9 +1,10 @@
 ---
 - setup:
+# - debug: var=hostvars
 - name: "Add to hosts"
   lineinfile:
     dest: "/etc/hosts"
-    line: "{{ item }} {{ hostvars[item]['ec2_tag_Name'] }}.ec2.internal {{ hostvars[item]['ec2_tag_Name'] }}"
+    line: "{{ item }} {{ hostvars[item]['ec2_tag_Name'] }}.ec2.internal {{ hostvars[item]['ec2_tag_Name'] }} {{ hostvars[item]['ec2_private_dns_name'].split('.')[0] }}"
   with_items: "{{ groups['tag_automated_true'] }}"
 
 - name: "Add standard packages"
@@ -11,6 +12,7 @@
   with_items:
     - git
     - bind-utils
+    - sysstat
 
 - name: "Get git repository"
   file: path=/installs state=directory

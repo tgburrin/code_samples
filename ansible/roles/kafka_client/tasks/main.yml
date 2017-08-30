@@ -1,9 +1,50 @@
 ---
+- lineinfile:
+    path: /etc/ld.so.conf.d/local.conf
+    line: "/usr/local/lib"
+    create: yes
+
 - package:
-    name: cmake
+    name: "{{ item }}"
     state: latest
+  with_items:
+    - gcc
+    - gcc-c++
+    - cmake
+    - postgresql95-devel
+
+- file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /installs/librdkafka
+    - /installs/cJSON
 
 - git: repo="{{ item.repo }}" dest="{{ item.dest }}"
   with_items:
-    - { repo: https://github.com/edenhill/librdkafka.git, dest: /installs/librdkafka }
-    - { repo: https://github.com/DaveGamble/cJSON.git, dest: /installs/cJSON }
+    - { repo: "https://github.com/edenhill/librdkafka.git", dest: "/installs/librdkafka" }
+    - { repo: "https://github.com/DaveGamble/cJSON.git", dest: "/installs/cJSON" }
+
+- shell: ./configure && make -j"{{ ansible_processor_cores }}" && make install
+  args:
+    chdir: /installs/librdkafka
+    creates: "/usr/local/lib/librdkafka.so"
+
+- shell: cmake . && make -j"{{ ansible_processor_cores }}" && make install
+  args:
+    chdir: /installs/cJSON
+    creates: "/usr/local/lib/libcjson.so"
+
+- command: ldconfig -v
+
+- lineinfile:
+    path: /etc/profile.d/pkgconfig.sh
+    line: "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib64/pgsql95/pkgconfig"
+    create: yes
+    owner: root
+    group: root
+    mode: 0755
+
+- shell: bash --login -c make
+  args:
+    chdir: /installs/code_samples/c
