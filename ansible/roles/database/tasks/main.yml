@@ -42,3 +42,6 @@
 
 - name: Load Objects
   shell: "psql -U tgburrin < /installs/code_samples/pgsql/content.sql"
+
+- name: Create basic content
+  script: create_content.sh
