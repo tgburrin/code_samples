@@ -67,15 +67,12 @@
 
 - hosts: tag_instance_type_webserver
   roles:
-    - golang
     - webserver
 
 - hosts: tag_instance_type_kafka_queue
   roles:
-    - java8
     - kafka
 
 - hosts: tag_instance_type_webclient
   roles:
-    - java8
     - webclient
