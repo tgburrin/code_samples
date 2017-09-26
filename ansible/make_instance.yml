@@ -22,14 +22,14 @@
   register: ec2
   with_sequence: start=1 end={{ inst.num }} format="{{ inst.name }}%02d"
 
-#- debug: var=ec2
+#- debug: var=ec2.results
 
 - name: Wait for SSH to come up
   wait_for:
-    host: "{{ item.private_ip }}"
+    host: "{{ item.instances[0].private_ip }}"
     port: 22
     delay: 5
     timeout: 320
     state: started
-  with_items: "{{ ec2.results[0].instances }}"
+  with_items: "{{ ec2.results }}"
 

@@ -1,0 +1,2 @@
+---
+pgsql_data_path: "/var/lib/pgsql/9.6/data"

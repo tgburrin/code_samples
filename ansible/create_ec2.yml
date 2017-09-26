@@ -12,8 +12,10 @@
     - include: make_instance.yml
       with_items:
          - { name: 'database', type: 'pgsql_database', num: 1 }
+         # - { name: 'citus', type: 'citus_database', num: 3 }
          - { name: 'webserver', type: 'webserver', num: 1 }
          - { name: 'webclient', type: 'webclient', num: 1 }
+         - { name: 'kafkaclient', type: 'kafka_client', num: 1 }
          - { name: 'kafka', type: 'kafka_queue', instance_type: "t2.small", num: 1 }
       loop_control:
         loop_var: inst
@@ -63,6 +65,9 @@
 - hosts: tag_instance_type_pgsql_database
   roles:
     - database
+
+- hosts: tag_instance_type_kafka_client
+  roles:
     - kafka_client
 
 - hosts: tag_instance_type_webserver
@@ -76,3 +81,7 @@
 - hosts: tag_instance_type_webclient
   roles:
     - webclient
+
+- hosts: tag_instance_type_citus_database
+  roles:
+    - citus

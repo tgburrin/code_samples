@@ -1,0 +1,89 @@
+---
+- name: Install postgres repo
+  yum: name=https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-6-x86_64/pgdg-ami201503-96-9.6-2.noarch.rpm state=present
+
+- name: Install postgres
+  register: pgsql_install
+  yum: name={{ item }} state=present
+  with_items:
+    - postgresql96-server
+    - postgresql96-contrib
+    - postgresql96-devel
+    - openssl-devel
+    - gcc
+
+- lineinfile:
+    dest: "/etc/profile.d/postgres.sh"
+    line: "export PATH=${PATH}:/usr/pgsql-9.6/bin/"
+    create: yes
+
+- stat: path=/var/lib/pgsql/9.6/data/postgresql.conf
+  register: postgres_installed
+
+- debug: var=postgres_installed.stat.exists
+
+- name: Build citus module
+  script: build_citus.sh
+
+- name: Create database
+  command: service postgresql-9.6 initdb
+  when: not postgres_installed.stat.exists
+
+- name: Add listen address
+  lineinfile:
+    dest: "{{ pgsql_data_path }}/postgresql.conf"
+    line: "listen_addresses = '*'"
+    insertbefore: "listen_addresses = 'localhost'"
+
+- name: Add citus module
+  lineinfile:
+    dest: "{{ pgsql_data_path }}/postgresql.conf"
+    line: "shared_preload_libraries = 'citus'"
+
+- name: Fix HBA
+  replace:
+    path: "{{ pgsql_data_path }}/pg_hba.conf"
+    regexp: '(^local.*|^host.*)(peer$|ident$)'
+    replace: '\1trust'
+
+- name: Add Trusted Citus Hosts
+  lineinfile:
+    dest: "{{ pgsql_data_path}}/pg_hba.conf"
+    line: "host     all     all     {{ item }}/32      trust"
+    insertafter: '^local'
+  with_items: "{{ groups['tag_instance_type_citus_database'] }}"
+
+- name: Add Valid Networks
+  lineinfile:
+    dest: "{{ pgsql_data_path }}/pg_hba.conf"
+    line: "host     all     all     {{ item }}      md5"
+    insertbefore: EOF
+  with_items:
+    - "172.30.0.0/24"
+    - "172.30.1.0/24"
+    - "172.16.1.0/26"
+    - "172.16.1.64/27"
+    - "172.16.1.96/27"
+
+- name: Start postgres
+  service: name=postgresql-9.6 state=started enabled=yes
+
+- name: Create Users
+  script: create_users.sh
+
+- name: Add citus workers
+  script: add_workers.sh "{{ groups['tag_instance_type_citus_database'][0] }}" "{{ item }}"
+  with_items: "{{ groups['tag_instance_type_citus_database'] }}"
+  when: inventory_hostname == groups['tag_instance_type_citus_database'][0]
+
+- name: Load Objects
+  shell: "psql -U tgburrin < /installs/code_samples/pgsql/content.sql"
+  when: inventory_hostname == groups['tag_instance_type_citus_database'][0]
+
+- name: Distribute tables
+  script: distribute_objects.sh
+  when: inventory_hostname == groups['tag_instance_type_citus_database'][0]
+
+- name: Create basic content
+  script: create_content.sh
+
