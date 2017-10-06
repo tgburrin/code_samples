@@ -8,7 +8,7 @@
 
 - lineinfile:
     path: "/opt/kafka_2.12-0.11.0.0/config/server.properties"
-    regexp: "^#delete.topic.enable=true"
+    regexp: "^[#]?delete.topic.enable=true"
     line: "delete.topic.enable=true"
 
 - lineinfile:
@@ -18,13 +18,13 @@
 
 - lineinfile:
     path: "/opt/kafka_2.12-0.11.0.0/config/server.properties"
-    regexp: "^#listeners=PLAINTEXT://:9092"
+    regexp: "^[#]?listeners=PLAINTEXT://:9092"
     line: "listeners=PLAINTEXT://:9092"
 
 - lineinfile:
     path: "/opt/kafka_2.12-0.11.0.0/config/server.properties"
-    regexp: "^#advertised.listeners="
-    line: "advertised.listeners=PLAINTEXT://kafka01.ec2.internal:9092"
+    regexp: "^[#]?advertised.listeners="
+    line: "advertised.listeners=PLAINTEXT://{{ ansible_fqdn }}:9092"
 
 - command: /opt/kafka_2.12-0.11.0.0/bin/zookeeper-server-start.sh -daemon /opt/kafka_2.12-0.11.0.0/config/zookeeper.properties
 
