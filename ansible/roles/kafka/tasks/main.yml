@@ -35,6 +35,6 @@
 
 - command: /opt/kafka_2.12-0.11.0.0/bin/kafka-server-start.sh -daemon /opt/kafka_2.12-0.11.0.0/config/server.properties
 
-- shell: ./kafka-topics.sh --zookeeper localhost --create --topic messsages --if-not-exists --partitions 1 --replication-factor 1
+- shell: ./kafka-topics.sh --zookeeper localhost --create --topic messages --if-not-exists --partitions 1 --replication-factor 1
   args:
     chdir: /opt/kafka_2.12-0.11.0.0/bin
