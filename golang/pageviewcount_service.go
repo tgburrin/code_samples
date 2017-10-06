@@ -9,6 +9,7 @@ import (
     "encoding/json"
     "net/http"
     "io/ioutil"
+    "time"
 
     "github.com/Shopify/sarama"
     "github.com/jessevdk/go-flags"
@@ -20,6 +21,8 @@ import (
     "github.com/tgburrin/rest_utilities/validation"
     "github.com/tgburrin/rest_utilities/dal_postgresql"
 )
+
+var iso8601format = "2006-01-02T15:04:05.999999Z07:00"
 
 var settings map[string]interface{}
 var contentTableDetails map[string]interface{}
@@ -35,6 +38,10 @@ func sendMessage ( msgInput map[string]interface{} ) ( err error ) {
     brv, err := json.Marshal(msgInput)
     if err != nil {
         log.Println("Could not json encode queue message: "+err.Error())
+    }
+
+    if debugOutput {
+        log.Printf("> sending json to kafka:\n%s\n", brv)
     }
     
     msg := &sarama.ProducerMessage{Topic: queueTopic, Value: sarama.ByteEncoder(brv)}
@@ -503,6 +510,7 @@ func processPageviewHandler ( w http.ResponseWriter, r *http.Request ) {
             queueMsg := make(map[string]interface{})
             common.SetKey(queueMsg, "type", "content_pageview")
             common.SetKey(queueMsg, "id", inputDoc["id"].(string))
+            common.SetKey(queueMsg, "pageview_dt", time.Now().Format(iso8601format))
 
             if err = sendMessage(queueMsg); err != nil {
                 errMsg := make(map[string]interface{})
