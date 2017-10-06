@@ -1,7 +1,7 @@
 {
     "content_connection": {
         "type": "static",
-        "hostname": "database01.ec2.internal",
+        "hostname": "database01",
         "ssl": false,
         "port": 5432,
         "username": "tgburrin",
@@ -18,7 +18,7 @@
     },
 
     "pageview_connection": {
-        "brokers": ["kafka01.ec2.internal:9092"],
+        "brokers": ["kafka01:9092"],
         "topic": "messages"
     },
 
