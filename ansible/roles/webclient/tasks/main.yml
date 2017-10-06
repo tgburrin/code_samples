@@ -1,4 +1,10 @@
 ---
+- package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - unzip
+
 - unarchive:
     src: "https://services.gradle.org/distributions/gradle-{{ gradle_version }}-bin.zip"
     dest: /opt

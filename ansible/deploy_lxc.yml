@@ -1,0 +1,28 @@
+---
+- hosts: lxc_hosts
+  roles:
+    - common
+
+- hosts: pgsql_database
+  roles:
+    - database
+
+- hosts: kafka_client
+  roles:
+    - kafka_client
+
+- hosts: webserver
+  roles:
+    - webserver
+
+- hosts: kafka_queue
+  roles:
+    - kafka
+
+- hosts: webclient
+  roles:
+    - webclient
+
+- hosts: citus_database
+  roles:
+    - citus

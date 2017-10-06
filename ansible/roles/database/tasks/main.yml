@@ -1,14 +1,24 @@
 ---
+- yum: name=https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm state=present
+  when: ansible_distribution == "CentOS"
+
 - name: Install postgres
   register: pgsql_install
   yum: name={{ item }} state=present
   with_items:
-    - postgresql95-server
-    - postgresql95-contrib
+    - postgresql96-server
+    - postgresql96-contrib
+
+- name: Add postgres utilities to path
+  lineinfile:
+    dest: /etc/profile.d/postgresql.sh
+    line: "export PATH=${PATH}:{{ pgsql_bin_path }}"
+    create: yes   
 
 - name: Create database
-  command: service postgresql95 initdb
-  when: pgsql_install.changed
+  command: "{{ pgsql_bin_path }}/postgresql96-setup initdb"
+  args:
+    creates: "{{ pgsql_data_path }}/postgresql.conf"
 
 - name: Add listen address
   lineinfile:
@@ -35,7 +45,7 @@
     - "172.16.1.96/27"
 
 - name: Start postgres
-  service: name=postgresql95 state=started enabled=yes
+  service: name=postgresql-9.6 state=started enabled=yes
 
 - name: Create Users
   script: create_users.sh

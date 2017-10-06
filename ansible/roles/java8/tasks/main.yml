@@ -1,8 +1,15 @@
 ---
-- name: Copy java8 RPM
+- name: Copy java8 RPM (AWS)
   shell: "scp root@172.30.0.10:/installs/jdk-8u144-linux-x64.rpm /tmp"
   args:
     creates: "/tmp/jdk-8u144-linux-x64.rpm"
+  when: cloud_environment is defined and cloud_environment == "AWS"
+
+- name: Copy java8 RPM (local)
+  shell: "scp root@kvasir:/installs/jdk-8u144-linux-x64.rpm /tmp"
+  args:
+    creates: "/tmp/jdk-8u144-linux-x64.rpm"
+  when: cloud_environment is defined and cloud_environment == "local" 
 
 - name: Install java8
   yum:

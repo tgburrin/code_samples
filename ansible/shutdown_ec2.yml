@@ -12,9 +12,15 @@
     - lineinfile: dest=/tmp/ec2hosts.ns backup=no insertafter=EOF line="send"
     - shell: "nsupdate < /tmp/ec2hosts.ns"
 
+
 - hosts: tag_automated_true
   tasks:
+    - action: ec2_facts
     - name: "Creating a shutting down automated instances"
-      shell: poweroff
-      become: true
-      become_user: root
+      local_action:
+        module: ec2
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        state: absent
+        region: "us-east-1"
+        instance_ids: "{{ ansible_ec2_instance_id }}"

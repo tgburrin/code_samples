@@ -18,6 +18,7 @@
      instance_tags:
         Name: "{{ item }}"
         instance_type: "{{ inst.type }}"
+        cloud_provider: "aws"
         automated: "true"
   register: ec2
   with_sequence: start=1 end={{ inst.num }} format="{{ inst.name }}%02d"

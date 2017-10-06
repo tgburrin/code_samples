@@ -15,10 +15,11 @@
      network: public
      subnetwork: "{{ subnet }}"
      zone: "{{ zone }}"
-     tags: "automated,{{ inst.type | regex_replace('_', '-') }}"
+     tags: "automated,{{ inst.type | regex_replace('_', '-') }},gce"
      metadata:
         instance_type: "{{ inst.type }}"
         automated: "true"
+        cloud_provider: "gce"
   register: gce
   with_sequence: start=1 end={{ inst.num }} format="{{ inst.name }}%02d"
 

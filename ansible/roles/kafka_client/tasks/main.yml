@@ -11,7 +11,7 @@
     - gcc
     - gcc-c++
     - cmake
-    - postgresql95-devel
+    - make
 
 - file:
     path: "{{ item }}"
@@ -37,9 +37,10 @@
 
 - command: ldconfig -v
 
+# This is heavily tied to the version of postgres
 - lineinfile:
     path: /etc/profile.d/pkgconfig.sh
-    line: "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib64/pgsql95/pkgconfig"
+    line: "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/pgsql-9.6/lib/pkgconfig"
     create: yes
     owner: root
     group: root

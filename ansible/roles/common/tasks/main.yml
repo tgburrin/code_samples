@@ -1,11 +1,12 @@
 ---
 - setup:
 # - debug: var=hostvars
-- name: "Add to hosts"
+- name: "Add to hosts (AWS)"
   lineinfile:
     dest: "/etc/hosts"
     line: "{{ item }} {{ hostvars[item]['ec2_tag_Name'] }}.ec2.internal {{ hostvars[item]['ec2_tag_Name'] }} {{ hostvars[item]['ec2_private_dns_name'].split('.')[0] }}"
   with_items: "{{ groups['tag_automated_true'] }}"
+  when: cloud_environment is defined and cloud_environment == "AWS"
 
 - name: "Add standard packages"
   package: name="{{ item }}" state=latest
@@ -19,7 +20,7 @@
 - git: repo=https://github.com/tgburrin/code_samples.git dest=/installs/code_samples
 - copy:
     dest: "/root/.ssh/id_rsa"
-    content: "{{ aws_internal_key }}"
+    content: "{{ tgb_internal_key }}"
     owner: root
     group: root
     mode: 0600
