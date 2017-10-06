@@ -1,0 +1,35 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars:
+    service_account_email: admin-529@test-ias-178321.iam.gserviceaccount.com
+    credentials_file: /home/tgburrin/test-ias-6b7bad44a550.json
+    project_id: test-ias-178321
+    instance_type: f1-micro
+    image: centos-7
+    zone: us-central1-c
+    subnet: services
+
+  tasks:
+    - debug: var=build_hosts
+    - include: make_gce_instance.yml
+      with_items:
+         - { name: 'database', type: 'pgsql_database', num: 1 }
+         #- { name: 'citus', type: 'citus_database', num: 1 }
+         #- { name: 'webserver', type: 'webserver', num: 1 }
+         #- { name: 'webclient', type: 'webclient', num: 1 }
+         #- { name: 'kafkaclient', type: 'kafka_client', num: 1 }
+         #- { name: 'kafka', type: 'kafka_queue', instance_type: "n1-standard-1", num: 1 }
+      loop_control:
+        loop_var: inst
+      when: build_hosts is defined and build_hosts == "true"
+
+    - meta: refresh_inventory
+
+- hosts: tag_automated
+  vars:
+    ansible_ssh_user: "tgburrin"
+  roles:
+    - common

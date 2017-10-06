@@ -1,0 +1,29 @@
+---
+#- debug: var=build_hosts
+#- debug: var=inst
+
+- name: Provision a set of instances
+  gce:
+     service_account_email: "{{ service_account_email }}"
+     machine_type: "{{ inst.instance_type if inst.instance_type is defined else instance_type }}"
+     instance_names: "{{ item }}"
+     credentials_file: "{{ credentials_file }}"
+     project_id: "{{ project_id }}"
+     image: "{{ image }}"
+
+     external_ip: none
+     network: public
+     subnetwork: "{{ subnet }}"
+     zone: "{{ zone }}"
+     tags: "automated,{{ inst.type | regex_replace('_', '-') }}"
+     metadata:
+        instance_type: "{{ inst.type }}"
+        automated: "true"
+  register: gce
+  with_sequence: start=1 end={{ inst.num }} format="{{ inst.name }}%02d"
+
+- debug: var=gce
+
+- name: Wait for SSH to come up
+  wait_for: host={{ item.instance_data[0].private_ip }} port=22 delay=10 timeout=60
+  with_items: "{{ gce.results }}"

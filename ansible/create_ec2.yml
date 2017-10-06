@@ -9,7 +9,7 @@
 
   tasks:
     - debug: var=build_hosts
-    - include: make_instance.yml
+    - include: make_ec2_instance.yml
       with_items:
          - { name: 'database', type: 'pgsql_database', num: 1 }
          # - { name: 'citus', type: 'citus_database', num: 3 }
