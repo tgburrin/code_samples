@@ -42,26 +42,50 @@ create table if not exists client_counter (
     primary key (pageview_date, client_id)
 );
 
+create or replace function get_source_ref ( sid varchar(32) ) returns bigint as $$
+    declare
+        rv bigint;
+    begin
+        select source_ref_int into rv from source_ref where source_id = sid;
+        return rv;
+    end
+$$ language plpgsql;
+
+create or replace function set_source_ref ( sid varchar(32), sr bigint ) returns bigint as $$
+    begin
+        IF sr IS NULL THEN
+            delete from source_ref where source_id = sid;
+        ELSE
+            update source_ref set
+                source_ref_int = sr
+            where
+                source_id = sid;
+
+            if NOT FOUND THEN
+                insert into source_ref (source_id, source_ref_int) values (sid, sr);
+            end if;
+        END IF;
+
+        return sr;
+    end
+$$ language plpgsql;
+
 create or replace function get_message_ref ( ) returns bigint as $$
     declare
         rv bigint;
     begin
-        select source_ref_int into rv from source_ref where source_id = 'content_pv_queue';
+        select get_source_ref into rv from get_source_ref('content_pv_queue');
         return rv;
     end
 $$ language plpgsql;
 
 create or replace function set_message_ref ( sr bigint ) returns bigint as $$
-    begin
-        update source_ref set
-            source_ref_int = sr
-        where
-            source_id = 'content_pv_queue';
+    declare
+        rv bigint;
 
-        if NOT FOUND THEN
-            insert into source_ref (source_id, source_ref_int) values ( 'content_pv_queue', sr );
-        end if;
-        return sr;
+    begin
+        select set_source_ref into rv from set_source_ref('content_pv_queue', sr);
+        return rv;
     end
 $$ language plpgsql;
 
