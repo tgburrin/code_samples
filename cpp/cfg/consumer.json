@@ -1,0 +1,19 @@
+{
+    "batch_commit_size": 1000,
+
+    "content_connection": {
+        "type": "static",
+        "hostname": "database01",
+        "port": 5432,
+        "username": "tgburrin",
+        "password": "junk_password",
+        "database": "tgburrin"
+    },
+
+    "pageview_connection": {
+        "brokers": ["kafka01:9092"],
+        "topic": "messages",
+        "debug": false
+    }
+}
+
