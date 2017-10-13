@@ -9,11 +9,10 @@
 
 SourceReference::SourceReference(string sid, PostgresCfg c) {
 	sourceId = sid;
-	PostgresDbh tmp(c);
-	dbh = &tmp;
+	dbh = new PostgresDbh(c);
 	isPrivateDbh = true;
 
-	_RefreshFromDatabase();
+	RefreshFromDatabase();
 }
 
 SourceReference::SourceReference(string sid, PostgresDbh *d) {
@@ -21,31 +20,32 @@ SourceReference::SourceReference(string sid, PostgresDbh *d) {
 	dbh = d;
 	isPrivateDbh = false;
 
-	_RefreshFromDatabase();
+	RefreshFromDatabase();
 }
 
 SourceReference::~SourceReference() {
+	if ( isPrivateDbh )
+		delete dbh;
 }
 
-void SourceReference::_RefreshFromDatabase()
+void SourceReference::RefreshFromDatabase()
 {
+	sourceRef = 0;
+	isNull = true;
+
 	vector<string> args = {sourceId};
 	uint64_t rows = dbh->ExecuteStatement("select * from get_source_ref($1)", args);
 	if ( rows ) {
 		vector< vector<char *> > tbl = dbh->GetRows();
-		sourceRef = boost::lexical_cast<int64_t>(tbl[0][0]);
-		isNull = false;
-	}
-	else
-	{
-		sourceRef = 0;
-		isNull = true;
+		if ( tbl[0][0] != NULL ) {
+			sourceRef = boost::lexical_cast<int64_t>(tbl[0][0]);
+			isNull = false;
+		}
 	}
 }
 
 int64_t SourceReference::GetSourceRef()
 {
-	_RefreshFromDatabase();
 	return sourceRef;
 }
 

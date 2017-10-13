@@ -28,16 +28,16 @@ private:
 	int64_t sourceRef;
 	bool isNull;
 
-	void _RefreshFromDatabase();
 
 public:
 	SourceReference(string, PostgresCfg);
 	SourceReference(string, PostgresDbh *);
 	virtual ~SourceReference();
 
-	int64_t GetSourceRef();
+	void RefreshFromDatabase();
 	void UpdateSourceRef(int64_t);
 
+	int64_t GetSourceRef();
 	bool IsNull();
 };
 

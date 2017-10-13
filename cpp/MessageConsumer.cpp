@@ -77,6 +77,11 @@ void MessageConsumer::SetDebug(bool b) {
 	debug = b;
 }
 
+int64_t MessageConsumer::GetSourceReference()
+{
+	return sourceReference;
+}
+
 void MessageConsumer::SetSourceReference(int64_t sr)
 {
 	sourceReference = sr;
@@ -149,7 +154,7 @@ void MessageConsumer::Start() {
 			throw ApplicationException("Starting message " + to_string(current_sr) + " could not be found");
 
 	} else {
-		RdKafka::ErrorCode errmsg = consumer->start(topic, partition, sourceReference);
+		RdKafka::ErrorCode errmsg = consumer->start(topic, partition, RdKafka::Topic::OFFSET_BEGINNING);
 		if (errmsg != RdKafka::ERR_NO_ERROR)
 			throw ApplicationException(RdKafka::err2str(errmsg));
 	}

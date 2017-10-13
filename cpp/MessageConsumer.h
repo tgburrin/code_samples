@@ -45,6 +45,7 @@ public:
 
 	void SetDebug(bool);
 	void SetSourceReference(int64_t);
+	int64_t GetSourceReference();
 	void Start();
 	void Stop();
 	string *Read();

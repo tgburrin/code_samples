@@ -5,6 +5,7 @@
 #include <thread>
 #include <mutex>
 #include <csignal>
+#include <chrono>
 
 #include <unistd.h>
 
@@ -20,6 +21,7 @@ mutex counterLock;
 
 uint64_t eventCounter = 0;
 uint counterDisplaySeconds = 5;
+uint commitTimeSeconds = 30;
 
 bool running = true;
 
@@ -32,32 +34,57 @@ void IncrementCounter ()
 
 void ProcessClientPageViews (ProcessCfg *cfg)
 {
-    MessageConsumer *mc;
+	PostgresDbh dbh(cfg->GetDatabaseCfg());
+	SourceReference sr("client_pageview", &dbh);
+    MessageConsumer *mc = 0;
 
     cout << "Creating client pv consumer" << endl;
     try {
     	mc = new MessageConsumer(*cfg);
+
+    	if ( !sr.IsNull() )
+    		mc->SetSourceReference(sr.GetSourceRef());
+
     	mc->Start();
     } catch ( ApplicationException &e ){
     	cerr << e.what() << endl;
     	exit(EXIT_FAILURE);
     }
 
+    chrono::system_clock::time_point lastCommitTime = chrono::system_clock::now();
+    uint64_t msgCounter = 0;
+
     while ( running )
     {
+		chrono::system_clock::time_point n = chrono::system_clock::now();
     	string *message;
-    	try {
-			while ( (message = mc->Read()) != NULL )
-			{
-				cout << *message << endl;
-				delete message;
-				IncrementCounter();
-			}
-    	} catch ( ApplicationException &e ) {
-    		cerr << e.what() << endl;
-    		exit(EXIT_FAILURE);
-    	}
 
+    	while ( (message = mc->Read()) != NULL )
+		{
+			cout << *message << endl;
+			delete message;
+
+			msgCounter++;
+			IncrementCounter();
+
+			cout << "Processing client message" << endl;
+
+			if ( msgCounter % cfg->GetBatchSize() == 0 )
+			{
+				cout << "Committing based on batch size" << endl;
+				sr.UpdateSourceRef(mc->GetSourceReference());
+				lastCommitTime = n;
+				msgCounter = 0;
+			}
+		}
+
+		if ( msgCounter > 0 && chrono::duration_cast<chrono::seconds>(n - lastCommitTime).count() >= commitTimeSeconds )
+		{
+			cout << "Committing based on time" << endl;
+			sr.UpdateSourceRef(mc->GetSourceReference());
+			lastCommitTime = n;
+			msgCounter = 0;
+		}
     	usleep(0);
     }
 
@@ -65,33 +92,59 @@ void ProcessClientPageViews (ProcessCfg *cfg)
 }
 void ProcessContentPageViews (ProcessCfg *cfg)
 {
-    MessageConsumer *mc;
+	PostgresDbh dbh(cfg->GetDatabaseCfg());
+	cout << "Getting sourceRef" << endl;
+	SourceReference sr("content_pageview", &dbh);
+    MessageConsumer *mc = 0;
+
+    chrono::system_clock::time_point ct = chrono::system_clock::now();
 
     cout << "Creating content pv consumer" << endl;
     try {
     	mc = new MessageConsumer(*cfg);
+    	if ( !sr.IsNull() )
+    		mc->SetSourceReference(sr.GetSourceRef());
+
     	mc->Start();
     } catch ( ApplicationException &e ){
     	cerr << e.what() << endl;
     	exit(EXIT_FAILURE);
     }
 
+    chrono::system_clock::time_point lastCommitTime = chrono::system_clock::now();
+    uint64_t msgCounter = 0;
+
     while ( running )
     {
+		chrono::system_clock::time_point n = chrono::system_clock::now();
     	string *message;
-    	try {
-			while ( (message = mc->Read()) != NULL )
-			{
-				cout << *message << endl;
-				delete message;
-				IncrementCounter();
-			}
-    	} catch ( ApplicationException &e ) {
-    		cerr << e.what() << endl;
-    		exit(EXIT_FAILURE);
-    	}
 
-    	usleep(0);
+    	while ( (message = mc->Read()) != NULL )
+		{
+			cout << *message << endl;
+			delete message;
+
+			msgCounter++;
+			IncrementCounter();
+
+			cout << "Processing client message" << endl;
+
+			if ( msgCounter % cfg->GetBatchSize() == 0 )
+			{
+				cout << "Committing based on batch size" << endl;
+				sr.UpdateSourceRef(mc->GetSourceReference());
+				lastCommitTime = n;
+				msgCounter = 0;
+			}
+		}
+
+		if ( msgCounter > 0 && chrono::duration_cast<chrono::seconds>(n - lastCommitTime).count() >= commitTimeSeconds )
+		{
+			cout << "Committing based on time" << endl;
+			sr.UpdateSourceRef(mc->GetSourceReference());
+			lastCommitTime = n;
+			msgCounter = 0;
+		}
     }
 
     delete mc;
