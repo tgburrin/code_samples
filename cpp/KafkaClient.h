@@ -9,11 +9,7 @@
 #define KAFKACLIENT_H_
 
 #include <iostream>
-#include <string>
-#include <sstream>
 #include <cstring>
-#include <vector>
-#include <exception>
 
 #include <librdkafka/rdkafkacpp.h>
 

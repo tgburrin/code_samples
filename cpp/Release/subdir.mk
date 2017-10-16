@@ -5,6 +5,9 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../ApplicationException.cpp \
+../ClientPageViewConsumer.cpp \
+../ContentPageViewConsumer.cpp \
+../KafkaClient.cpp \
 ../MessageConsumer.cpp \
 ../PostgresCfg.cpp \
 ../PostgresDbh.cpp \
@@ -14,6 +17,9 @@ CPP_SRCS += \
 
 OBJS += \
 ./ApplicationException.o \
+./ClientPageViewConsumer.o \
+./ContentPageViewConsumer.o \
+./KafkaClient.o \
 ./MessageConsumer.o \
 ./PostgresCfg.o \
 ./PostgresDbh.o \
@@ -23,6 +29,9 @@ OBJS += \
 
 CPP_DEPS += \
 ./ApplicationException.d \
+./ClientPageViewConsumer.d \
+./ContentPageViewConsumer.d \
+./KafkaClient.d \
 ./MessageConsumer.d \
 ./PostgresCfg.d \
 ./PostgresDbh.d \
@@ -35,7 +44,7 @@ CPP_DEPS += \
 %.o: ../%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -O3 -Wall -c -fmessage-length=0 -std=c++14 $(shell pkg-config --cflags libpq) $(shell pkg-config --cflags rdkafka++) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	g++ -O3 -Wall -c -fmessage-length=0 -std=c++14 $(shell pkg-config --cflags libpq) $(shell pkg-config jsoncpp --cflags) $(shell pkg-config --cflags rdkafka++) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

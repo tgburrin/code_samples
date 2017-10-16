@@ -16,24 +16,17 @@
 using namespace std;
 
 mutex counterLock;
-
 uint64_t eventCounter = 0;
+
 uint counterDisplaySeconds = 5;
-
 bool running = true;
-
-void IncrementCounter ()
-{
-	counterLock.lock();
-	eventCounter++;
-	counterLock.unlock();
-}
 
 // We could also do a static copy of RunProcess() and allow thread to call that directly
 void ProcessClientPageViews (ProcessCfg *cfg)
 {
 	try {
 		ClientPageViewConsumer cpv(cfg);
+		cpv.AddCounters(&eventCounter, &counterLock);
 		cpv.RunProcess(&running);
 	} catch (ApplicationException &e) {
 		cerr << e.what() << endl;
@@ -45,6 +38,7 @@ void ProcessContentPageViews (ProcessCfg *cfg)
 {
 	try {
 		ContentPageViewConsumer cpv(cfg);
+		cpv.AddCounters(&eventCounter, &counterLock);
 		cpv.RunProcess(&running);
 	} catch (ApplicationException &e) {
 		cerr << e.what() << endl;

@@ -9,12 +9,7 @@
 #define PROCESSCFG_H_
 
 #include <iostream>
-#include <string>
-#include <cstdint>
-#include <vector>
-
 #include <fstream>
-#include <sstream>
 
 #include <json/json.h>
 #include <json/reader.h>

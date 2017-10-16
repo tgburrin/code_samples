@@ -38,7 +38,7 @@ void SourceReference::RefreshFromDatabase()
 	if ( rows ) {
 		vector< vector<char *> > tbl = dbh->GetRows();
 		if ( tbl[0][0] != NULL ) {
-			sourceRef = boost::lexical_cast<int64_t>(tbl[0][0]);
+			sourceRef = stoull(tbl[0][0]);
 			isNull = false;
 		}
 	}
@@ -65,7 +65,7 @@ void SourceReference::UpdateSourceRef(int64_t sr)
 	uint64_t rows = dbh->ExecuteStatement("select * from set_source_ref($1,$2)", args);
 	if ( rows ) {
 		vector< vector<char *> > tbl = dbh->GetRows();
-		sourceRef = boost::lexical_cast<uint64_t>(tbl[0][0]);
+		sourceRef = stoull(tbl[0][0]);
 		isNull = false;
 	}
 	else

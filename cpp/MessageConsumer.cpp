@@ -11,11 +11,22 @@ MessageConsumer::MessageConsumer(ProcessCfg *c) {
 	debugOn = false;
 	commitTimeSeconds = 30;
 
+	eventCounter = 0;
+	eventCounterLock = 0;
+
 	cfg = c;
 	dbh = new PostgresDbh(cfg->GetDatabaseCfg());
 }
 MessageConsumer::~MessageConsumer() {
 	delete dbh;
+}
+
+void MessageConsumer::_IncrementCounter(){
+	if ( eventCounterLock != NULL && eventCounter != NULL ) {
+		eventCounterLock->lock();
+		*eventCounter += 1;
+		eventCounterLock->unlock();
+	}
 }
 
 void MessageConsumer::RunProcess(bool *running) {
@@ -59,7 +70,7 @@ void MessageConsumer::RunProcess(bool *running) {
 				cerr << e.what() << endl;
 				cerr << *message << endl;
 			}
-
+			_IncrementCounter();
 			delete message;
 
 			msgCounter++;
@@ -94,4 +105,10 @@ void MessageConsumer::RunProcess(bool *running) {
 
     kc->Stop();
     delete kc;
+}
+
+void MessageConsumer::AddCounters(uint64_t *evc, mutex *evcl)
+{
+	eventCounter = evc;
+	eventCounterLock = evcl;
 }

@@ -8,6 +8,8 @@
 #ifndef CONTENTPAGEVIEWCONSUMER_H_
 #define CONTENTPAGEVIEWCONSUMER_H_
 
+#include <iostream>
+
 #include "MessageConsumer.h"
 
 using namespace std;

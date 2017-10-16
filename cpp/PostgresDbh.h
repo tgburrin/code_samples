@@ -8,11 +8,7 @@
 #ifndef POSTGRESDBH_H_
 #define POSTGRESDBH_H_
 
-#include <iostream>
-#include <string>
-#include <cstring>
 #include <vector>
-#include <exception>
 
 // https://www.postgresql.org/
 #include <libpq-fe.h>

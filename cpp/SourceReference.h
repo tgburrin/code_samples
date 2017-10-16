@@ -9,9 +9,6 @@
 #define SOURCEREFERENCE_H_
 
 #include <string>
-#include <exception>
-
-#include <boost/lexical_cast.hpp>
 
 #include "ApplicationException.h"
 #include "PostgresCfg.h"

@@ -8,11 +8,7 @@
 #ifndef MESSAGECONSUMER_H_
 #define MESSAGECONSUMER_H_
 
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <vector>
-#include <chrono>
+#include <mutex>
 
 #include <unistd.h>
 
@@ -27,8 +23,13 @@
 using namespace std;
 
 class MessageConsumer {
+private:
+	void _IncrementCounter();
 
 protected:
+	uint64_t *eventCounter;
+	mutex *eventCounterLock;
+
 	bool debugOn;
 
 	string sourceReferenceName;
@@ -46,6 +47,7 @@ public:
 	virtual ~MessageConsumer();
 
 	void RunProcess(bool *);
+	void AddCounters(uint64_t *, mutex *);
 };
 
 #endif /* MESSAGECONSUMER_H_ */
