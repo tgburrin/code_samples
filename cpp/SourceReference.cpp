@@ -7,7 +7,7 @@
 
 #include "SourceReference.h"
 
-SourceReference::SourceReference(string sid, PostgresCfg c) {
+SourceReference::SourceReference(string sid, PostgresCfg *c) {
 	sourceId = sid;
 	dbh = new PostgresDbh(c);
 	isPrivateDbh = true;
@@ -42,6 +42,11 @@ void SourceReference::RefreshFromDatabase()
 			isNull = false;
 		}
 	}
+}
+
+string SourceReference::GetId()
+{
+	return sourceId;
 }
 
 int64_t SourceReference::GetSourceRef()

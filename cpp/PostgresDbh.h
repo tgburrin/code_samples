@@ -29,7 +29,7 @@ private:
 	bool inTxn;
 
 public:
-	PostgresDbh(PostgresCfg);
+	PostgresDbh(PostgresCfg *);
 	virtual ~PostgresDbh();
 
 	void StartTxn();

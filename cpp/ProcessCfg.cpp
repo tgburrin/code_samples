@@ -18,83 +18,70 @@ ProcessCfg::~ProcessCfg() {
 }
 
 void ProcessCfg::_ParseConfig (string config_file) {
-    stringstream cf;
-    string line;
+	Json::Value doc;
+    Json::Reader jr;
+
+    Json::Value v;
 
     ifstream infile(config_file.c_str());
-
-    while(getline(infile, line))
-        cf << line << endl;
-
+    jr.parse(infile, doc, false);
     infile.close();
 
-    pt::ptree mytree;
-    pt::read_json(cf, mytree);
+    if ( !jr.good() )
+    	throw ApplicationException("Could not parse config file");
 
-    try {
-        SetBatchSize(mytree.get<int>("batch_commit_size"));
-    }
-    catch ( pt::ptree_bad_path &err ) {}
-    catch ( const char *error ) {
-        cerr << "WARN: Ignoring bad batch size value: " << error << endl;
-    }
+    if ( !doc["batch_commit_size"].isNull() )
+        SetBatchSize(doc["batch_commit_size"].asInt());
 
     // Kafka details
-    try {
-        pt::ptree brk = mytree.get_child("pageview_connection.brokers");
-        for(pt::ptree::const_iterator it = brk.begin(); it != brk.end(); it++) {
-            string val = it->second.get_value<string>();
-            if ( !val.empty() )
-                brokers.push_back(it->second.get_value<string>());
-        }
+    if ( doc["pageview_connection"].isNull() )
+    	throw ApplicationException("The 'pageview_connection' section of the config must be specified");
 
-        if ( brokers.size() == 0 )
-            throw ApplicationException("Error: at least one broker must be specified in pageview_connection");
-    }
-    catch ( pt::ptree_bad_path &err ) {
-        throw ApplicationException("Error: brokers section of pageview_connection is required");
-    }
+	v = doc["pageview_connection"]["brokers"];
 
-    try {
-        SetTopic(mytree.get<string>("pageview_connection.topic"));
-    } catch ( pt::ptree_bad_path &err ) {
+	if ( v.isNull() )
+		throw ApplicationException("The 'brokers' section of pageview_connection must be specified");
+
+	for(uint i=0; i < v.size(); i++) {
+		string val = v[i].asString();
+		if ( !val.empty() )
+			brokers.push_back(val);
+	}
+
+	if ( brokers.size() == 0 )
+		throw ApplicationException("Error: at least one broker must be specified in pageview_connection");
+
+	if ( !doc["pageview_connection"]["topic"].isNull() ) {
+        SetTopic(doc["pageview_connection"]["topic"].asString());
+    }
+	else
+	{
         throw ApplicationException("Error: the topic must be specified in pageview_connection");
     }
 
-    try {
-        kafkaDebug = mytree.get<bool>("pageview_connection.debug");
-    } catch ( pt::ptree_bad_path &err ) {}
+    if ( !doc["pageview_connection"]["debug"].isNull() )
+        kafkaDebug = doc["pageview_connection"]["debug"].asBool();
 
     // Database details
-    try {
-        database.SetHostname(mytree.get<string>("content_connection.hostname"));
-    } catch ( pt::ptree_bad_path &err ) {}
+    if ( !doc["content_connection"]["hostname"].isNull() )
+    	database.SetHostname(doc["content_connection"]["hostname"].asString());
 
-    try {
-        database.SetPort(mytree.get<int>("content_connection.port"));
+    if ( !doc["content_connection"]["port"].isNull() ) {
+    	try {
+    		database.SetPort(doc["content_connection"]["port"].asUInt());
+    	} catch ( const char *error ) {
+			cerr << "WARN: Ignoring bad batch size value: " << error << endl;
+		}
     }
-    catch ( pt::ptree_bad_path &err ) {}
-    catch ( const char *error ) {
-        cerr << "WARN: Ignoring bad batch size value: " << error << endl;
-    }
 
-    try {
-        database.SetUsername(mytree.get<string>("content_connection.username"));
-    } catch ( pt::ptree_bad_path &err ) {}
+    if ( !doc["content_connection"]["username"].isNull() )
+        database.SetUsername(doc["content_connection"]["username"].asString());
 
-    try {
-        database.SetPassword(mytree.get<string>("content_connection.password"));
-    } catch ( pt::ptree_bad_path &err ) {}
+    if ( !doc["content_connection"]["password"].isNull() )
+        database.SetPassword(doc["content_connection"]["password"].asString());
 
-    try {
-        database.SetDatabase(mytree.get<string>("content_connection.database"));
-    } catch ( pt::ptree_bad_path &err ) {}
-
-    /*
-    pt::ptree::const_iterator end = mytree.end();
-    for(pt::ptree::const_iterator it = mytree.begin(); it != end; ++it)
-        cout << it->first << ": " << it->second.get_value<string>() << endl;
-    */
+    if ( !doc["content_connection"]["database"].isNull() )
+        database.SetDatabase(doc["content_connection"]["database"].asString());
 }
 
 void ProcessCfg::SetBatchSize ( uint32_t b ) {
@@ -104,8 +91,8 @@ uint32_t ProcessCfg::GetBatchSize () {
     return batchCommitSize;
 }
 
-PostgresCfg ProcessCfg::GetDatabaseCfg() {
-	return database;
+PostgresCfg *ProcessCfg::GetDatabaseCfg() {
+	return &database;
 }
 
 vector<string> ProcessCfg::GetBrokers() {

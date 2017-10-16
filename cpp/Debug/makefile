@@ -43,7 +43,7 @@ all: kafka_client
 kafka_client: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -o "kafka_client" $(OBJS) $(USER_OBJS) $(LIBS) $(shell pkg-config --libs libpq) $(shell pkg-config  --libs rdkafka++) -lpthread
+	g++ -o "kafka_client" $(OBJS) $(USER_OBJS) $(LIBS) $(shell pkg-config --libs libpq) $(shell pkg-config jsoncpp --libs) $(shell pkg-config  --libs rdkafka++) -lpthread
 	@echo 'Finished building target: $@'
 	@echo ' '
 

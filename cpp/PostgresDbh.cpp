@@ -7,13 +7,16 @@
 
 #include "PostgresDbh.h"
 
-PostgresDbh::PostgresDbh(PostgresCfg c)
+PostgresDbh::PostgresDbh(PostgresCfg *c)
 {
 	inTxn = false;
     pgresult = 0;
     dbh = 0;
 
-	dbh = PQconnectdb(c.GetURI().c_str());
+    if ( !PQisthreadsafe() )
+    	throw ApplicationException("libpq is not thread safe");
+
+	dbh = PQconnectdb(c->GetURI().c_str());
 
 	if ( PQstatus(dbh) != CONNECTION_OK )
 		throw ApplicationException(PQerrorMessage(dbh));
@@ -43,6 +46,19 @@ void PostgresDbh::CommitTxn()
 	PGresult *pgresult = PQexec(dbh, "COMMIT");
     if ( PQresultStatus(pgresult) != PGRES_COMMAND_OK )
         throw ApplicationException("Error while committing transaction: " + string(PQerrorMessage(dbh)));
+
+    PQclear(pgresult);
+    inTxn = false;
+}
+
+void PostgresDbh::RollbackTxn()
+{
+	if( !inTxn )
+		throw ApplicationException("Cannot rollback a transaction that is not started");
+
+	PGresult *pgresult = PQexec(dbh, "ROLLBACK");
+    if ( PQresultStatus(pgresult) != PGRES_COMMAND_OK )
+        throw ApplicationException("Error while rolling back transaction: " + string(PQerrorMessage(dbh)));
 
     PQclear(pgresult);
     inTxn = false;

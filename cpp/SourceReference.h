@@ -30,7 +30,7 @@ private:
 
 
 public:
-	SourceReference(string, PostgresCfg);
+	SourceReference(string, PostgresCfg *);
 	SourceReference(string, PostgresDbh *);
 	virtual ~SourceReference();
 
@@ -39,6 +39,7 @@ public:
 
 	int64_t GetSourceRef();
 	bool IsNull();
+	string GetId();
 };
 
 #endif /* SOURCEREFERENCE_H_ */

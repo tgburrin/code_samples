@@ -5,15 +5,13 @@
 #include <thread>
 #include <mutex>
 #include <csignal>
-#include <chrono>
 
 #include <unistd.h>
 
-#include "PostgresDbh.h"
-#include "PostgresCfg.h"
 #include "ProcessCfg.h"
-#include "SourceReference.h"
-#include "MessageConsumer.h"
+#include "ApplicationException.h"
+#include "ClientPageViewConsumer.h"
+#include "ContentPageViewConsumer.h"
 
 using namespace std;
 
@@ -21,7 +19,6 @@ mutex counterLock;
 
 uint64_t eventCounter = 0;
 uint counterDisplaySeconds = 5;
-uint commitTimeSeconds = 30;
 
 bool running = true;
 
@@ -32,122 +29,27 @@ void IncrementCounter ()
 	counterLock.unlock();
 }
 
+// We could also do a static copy of RunProcess() and allow thread to call that directly
 void ProcessClientPageViews (ProcessCfg *cfg)
 {
-	PostgresDbh dbh(cfg->GetDatabaseCfg());
-	SourceReference sr("client_pageview", &dbh);
-    MessageConsumer *mc = 0;
+	try {
+		ClientPageViewConsumer cpv(cfg);
+		cpv.RunProcess(&running);
+	} catch (ApplicationException &e) {
+		cerr << e.what() << endl;
+		exit(EXIT_FAILURE);
+	}
 
-    cout << "Creating client pv consumer" << endl;
-    try {
-    	mc = new MessageConsumer(*cfg);
-
-    	if ( !sr.IsNull() )
-    		mc->SetSourceReference(sr.GetSourceRef());
-
-    	mc->Start();
-    } catch ( ApplicationException &e ){
-    	cerr << e.what() << endl;
-    	exit(EXIT_FAILURE);
-    }
-
-    chrono::system_clock::time_point lastCommitTime = chrono::system_clock::now();
-    uint64_t msgCounter = 0;
-
-    while ( running )
-    {
-		chrono::system_clock::time_point n = chrono::system_clock::now();
-    	string *message;
-
-    	while ( (message = mc->Read()) != NULL )
-		{
-			cout << *message << endl;
-			delete message;
-
-			msgCounter++;
-			IncrementCounter();
-
-			cout << "Processing client message" << endl;
-
-			if ( msgCounter % cfg->GetBatchSize() == 0 )
-			{
-				cout << "Committing based on batch size" << endl;
-				sr.UpdateSourceRef(mc->GetSourceReference());
-				lastCommitTime = n;
-				msgCounter = 0;
-			}
-		}
-
-		if ( msgCounter > 0 && chrono::duration_cast<chrono::seconds>(n - lastCommitTime).count() >= commitTimeSeconds )
-		{
-			cout << "Committing based on time" << endl;
-			sr.UpdateSourceRef(mc->GetSourceReference());
-			lastCommitTime = n;
-			msgCounter = 0;
-		}
-    	usleep(0);
-    }
-
-    delete mc;
 }
 void ProcessContentPageViews (ProcessCfg *cfg)
 {
-	PostgresDbh dbh(cfg->GetDatabaseCfg());
-	cout << "Getting sourceRef" << endl;
-	SourceReference sr("content_pageview", &dbh);
-    MessageConsumer *mc = 0;
-
-    chrono::system_clock::time_point ct = chrono::system_clock::now();
-
-    cout << "Creating content pv consumer" << endl;
-    try {
-    	mc = new MessageConsumer(*cfg);
-    	if ( !sr.IsNull() )
-    		mc->SetSourceReference(sr.GetSourceRef());
-
-    	mc->Start();
-    } catch ( ApplicationException &e ){
-    	cerr << e.what() << endl;
-    	exit(EXIT_FAILURE);
-    }
-
-    chrono::system_clock::time_point lastCommitTime = chrono::system_clock::now();
-    uint64_t msgCounter = 0;
-
-    while ( running )
-    {
-		chrono::system_clock::time_point n = chrono::system_clock::now();
-    	string *message;
-
-    	while ( (message = mc->Read()) != NULL )
-		{
-			cout << *message << endl;
-			delete message;
-
-			msgCounter++;
-			IncrementCounter();
-
-			cout << "Processing client message" << endl;
-
-			if ( msgCounter % cfg->GetBatchSize() == 0 )
-			{
-				cout << "Committing based on batch size" << endl;
-				sr.UpdateSourceRef(mc->GetSourceReference());
-				lastCommitTime = n;
-				msgCounter = 0;
-			}
-		}
-
-		if ( msgCounter > 0 && chrono::duration_cast<chrono::seconds>(n - lastCommitTime).count() >= commitTimeSeconds )
-		{
-			cout << "Committing based on time" << endl;
-			sr.UpdateSourceRef(mc->GetSourceReference());
-			lastCommitTime = n;
-			msgCounter = 0;
-		}
-    }
-
-    delete mc;
+	try {
+		ContentPageViewConsumer cpv(cfg);
+		cpv.RunProcess(&running);
+	} catch (ApplicationException &e) {
+		cerr << e.what() << endl;
+		exit(EXIT_FAILURE);
+	}
 }
 
 void DisplayEventsProcessed () {
@@ -201,13 +103,19 @@ int main (int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    ProcessCfg cfg(configFile);
+    ProcessCfg *cfg;
+    try {
+    	cfg = new ProcessCfg(configFile);
+    } catch (ApplicationException &e) {
+    	cerr << e.what() << endl;
+    	exit(EXIT_FAILURE);
+    }
 
     signal(SIGINT, GracefulShutdown);
 
     vector<thread> children(2);
-    children.at(0) = thread(ProcessClientPageViews, &cfg);
-    children.at(1) = thread(ProcessContentPageViews, &cfg);
+    children.at(0) = thread(ProcessContentPageViews, cfg);
+    children.at(1) = thread(ProcessClientPageViews, cfg);
 
     while ( running )
     {
@@ -219,5 +127,6 @@ int main (int argc, char **argv) {
     	if (children.at(i).joinable() )
     		children.at(i).join();
 
+    delete cfg;
     exit(EXIT_SUCCESS);
 }

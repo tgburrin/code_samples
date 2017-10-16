@@ -9,46 +9,43 @@
 #define MESSAGECONSUMER_H_
 
 #include <string>
+#include <iostream>
 #include <sstream>
 #include <vector>
-#include <exception>
+#include <chrono>
 
-#include <librdkafka/rdkafkacpp.h>
+#include <unistd.h>
+
+#include <json/json.h>
+#include <json/reader.h>
 
 #include "ApplicationException.h"
-#include "ProcessCfg.h"
+#include "KafkaClient.h"
+#include "PostgresDbh.h"
+#include "SourceReference.h"
 
 using namespace std;
 
 class MessageConsumer {
-private:
-	int64_t sourceReference;
-	string topic_name;
-	uint32_t partition;
 
-	string message;
+protected:
+	bool debugOn;
 
-	bool running;
-	bool debug;
+	string sourceReferenceName;
 
-	RdKafka::Conf *conf;
-	RdKafka::Conf *tconf;
+	ProcessCfg *cfg;
+	PostgresDbh *dbh;
+	SourceReference *sourceReference;
 
-	RdKafka::Consumer *consumer;
-	RdKafka::Topic *topic;
+	uint commitTimeSeconds;
 
-	bool _ProcessMessage(RdKafka::Message *);
+	virtual void _ProcessMessage(Json::Value) = 0;
 
 public:
-	MessageConsumer(ProcessCfg);
+	MessageConsumer(ProcessCfg *c);
 	virtual ~MessageConsumer();
 
-	void SetDebug(bool);
-	void SetSourceReference(int64_t);
-	int64_t GetSourceReference();
-	void Start();
-	void Stop();
-	string *Read();
+	void RunProcess(bool *);
 };
 
 #endif /* MESSAGECONSUMER_H_ */

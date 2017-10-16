@@ -8,6 +8,7 @@
 #ifndef PROCESSCFG_H_
 #define PROCESSCFG_H_
 
+#include <iostream>
 #include <string>
 #include <cstdint>
 #include <vector>
@@ -15,14 +16,13 @@
 #include <fstream>
 #include <sstream>
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
+#include <json/json.h>
+#include <json/reader.h>
 
 #include "ApplicationException.h"
 #include "PostgresCfg.h"
 
 using namespace std;
-namespace pt = boost::property_tree;
 
 class ProcessCfg {
 private:
@@ -44,7 +44,7 @@ public:
 	void SetTopic(string);
 	string GetTopic(void);
 
-	PostgresCfg GetDatabaseCfg(void);
+	PostgresCfg *GetDatabaseCfg(void);
 	vector<string> GetBrokers(void);
 
 	bool DebugEnabled();
