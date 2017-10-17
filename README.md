@@ -4,7 +4,7 @@ These are several personal coding samples encompasing a single project.
 
 #### Postgresql
 This is the schema for a sample database that contains a very simple set of tables and a few stored procedures to go with them.
-The main purpose of these tables are to manage some basic pieces of content, counters about them, and a source ref for a kafka queue (this is for recovery purposes in the event that the database is restored from a backup).
+The main purpose of these tables are to manage some basic pieces of content, counters about them, and a source ref for a kafka queue (this is for recovery purposes in the event that the database is restored from a backup).  Interesting qualities of this schema include inheritied tables created by the 'create_client' sproc and the choice to use dynamic sql (in 'content_pageview') to partition the content pageview data by client.
 
 #### Golang
 This is the rest layer that abstracts the pgsql database and adds events to the kafka queue.
