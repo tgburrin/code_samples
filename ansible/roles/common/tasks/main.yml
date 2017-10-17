@@ -15,9 +15,11 @@
     - bind-utils
     - sysstat
 
+#- file: path=/installs/code_samples state=absent
+
 - name: "Get git repository"
   file: path=/installs state=directory
-- git: repo=https://github.com/tgburrin/code_samples.git dest=/installs/code_samples update=no
+- git: repo=https://github.com/tgburrin/code_samples.git dest=/installs/code_samples update=no version=master
 - copy:
     dest: "/root/.ssh/id_rsa"
     content: "{{ tgb_internal_key }}"

@@ -20,6 +20,8 @@
     - /installs/librdkafka
     - /installs/cJSON
 
+- unarchive: src=https://github.com/open-source-parsers/jsoncpp/archive/1.7.3.tar.gz dest=/installs remote_src=yes creates=/installs/jsoncpp-1.7.3
+
 - git: repo="{{ item.repo }}" dest="{{ item.dest }}"
   with_items:
     - { repo: "https://github.com/edenhill/librdkafka.git", dest: "/installs/librdkafka" }
@@ -35,6 +37,11 @@
     chdir: /installs/cJSON
     creates: "/usr/local/lib/libcjson.so"
 
+- shell: cmake -DBUILD_SHARED_LIBS=ON . && make -j"{{ ansible_processor_cores }}" && make install
+  args:
+    chdir: /installs/jsoncpp-1.7.3
+    creates: "/usr/local/lib/libjsoncpp.so"
+
 - command: ldconfig -v
 
 # This is heavily tied to the version of postgres
@@ -49,3 +56,7 @@
 - shell: bash --login -c make
   args:
     chdir: /installs/code_samples/c
+
+- shell: bash --login -c make
+  args:
+    chdir: /installs/code_samples/cpp/Default

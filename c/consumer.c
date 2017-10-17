@@ -589,10 +589,10 @@ int main (int argc, char **argv) {
             bool do_commit = false;
 
             if ( uncommitted_count % batch_commit_size == 0 ) {
-                fprintf(stdout, "Committeding %"PRId64" based on batch\n", uncommitted_count);
+                fprintf(stdout, "Committing %"PRId64" based on batch\n", uncommitted_count);
                 do_commit = true;
             } else if ( (now.tv_sec - committed_time.tv_sec) > uncommitted_timeout_sec ) {
-                fprintf(stdout, "Committeding %"PRId64" based on time\n", uncommitted_count);
+                fprintf(stdout, "Committing %"PRId64" based on time\n", uncommitted_count);
                 do_commit = true;
             }
 
