@@ -21,7 +21,7 @@
 							<builder buildPath="${workspace_loc:/kafka_client}/Default" id="cdt.managedbuild.target.gnu.builder.base.1345642466" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="cdt.managedbuild.target.gnu.builder.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.241955684" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1249430970" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base">
-								<option id="gnu.cpp.compiler.option.other.other.944517964" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -std=c++14 $(shell pkg-config --cflags libpq) $(shell pkg-config --cflags rdkafka++) $(shell pkg-config jsoncpp --cflags)" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.944517964" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -std=c++11 $(shell pkg-config --cflags libpq) $(shell pkg-config --cflags rdkafka++) $(shell pkg-config jsoncpp --cflags)" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.other.verbose.1695885340" name="Verbose (-v)" superClass="gnu.cpp.compiler.option.other.verbose" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1841577960" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
