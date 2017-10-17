@@ -74,7 +74,6 @@ int main (int argc, char **argv) {
 
     int opt;
     extern char *optarg;
-    extern int optind, opterr, optopt;
 
     while ((opt = getopt(argc, argv, "hc:k")) != -1) {
         switch (opt) {

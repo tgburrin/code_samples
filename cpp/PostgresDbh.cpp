@@ -91,7 +91,7 @@ uint64_t PostgresDbh::ExecuteStatement(string sql, vector<string> parameters)
 	else
 	{
 		const char *p[parameters.size()];
-		for ( int i=0; i < parameters.size(); i++)
+		for ( uint i=0; i < parameters.size(); i++)
 		{
 			p[i] = parameters[i].c_str();
 		}
