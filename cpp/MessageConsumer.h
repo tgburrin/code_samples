@@ -24,30 +24,30 @@ using namespace std;
 
 class MessageConsumer {
 private:
-	void _IncrementCounter();
+    void _IncrementCounter();
 
 protected:
-	uint64_t *eventCounter;
-	mutex *eventCounterLock;
+    uint64_t *eventCounter;
+    mutex *eventCounterLock;
 
-	bool debugOn;
+    bool debugOn;
 
-	string sourceReferenceName;
+    string sourceReferenceName;
 
-	ProcessCfg *cfg;
-	PostgresDbh *dbh;
-	SourceReference *sourceReference;
+    ProcessCfg *cfg;
+    PostgresDbh *dbh;
+    SourceReference *sourceReference;
 
-	uint commitTimeSeconds;
+    uint commitTimeSeconds;
 
-	virtual void _ProcessMessage(Json::Value) = 0;
+    virtual void _ProcessMessage(Json::Value) = 0;
 
 public:
-	MessageConsumer(ProcessCfg *c);
-	virtual ~MessageConsumer();
+    MessageConsumer(ProcessCfg *c);
+    virtual ~MessageConsumer();
 
-	void RunProcess(bool *);
-	void AddCounters(uint64_t *, mutex *);
+    void RunProcess(bool *);
+    void AddCounters(uint64_t *, mutex *);
 };
 
 #endif /* MESSAGECONSUMER_H_ */

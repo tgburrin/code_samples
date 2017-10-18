@@ -20,21 +20,21 @@ using namespace std;
 
 class PostgresDbh {
 private:
-	PGconn *dbh;
-	PGresult *pgresult;
-	bool inTxn;
+    PGconn *dbh;
+    PGresult *pgresult;
+    bool inTxn;
 
 public:
-	PostgresDbh(PostgresCfg *);
-	virtual ~PostgresDbh();
+    PostgresDbh(PostgresCfg *);
+    virtual ~PostgresDbh();
 
-	void StartTxn();
-	void CommitTxn();
-	void RollbackTxn();
+    void StartTxn();
+    void CommitTxn();
+    void RollbackTxn();
 
-	bool IsTxnStarted();
-	uint64_t ExecuteStatement(string, vector<string>);
-	vector< vector<char *> > GetRows();
+    bool IsTxnStarted();
+    uint64_t ExecuteStatement(string, vector<string>);
+    vector< vector<char *> > GetRows();
 };
 
 #endif /* POSTGRESDBH_H_ */

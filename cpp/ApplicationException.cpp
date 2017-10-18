@@ -13,5 +13,5 @@ ApplicationException::~ApplicationException() throw () {}
 
 const char* ApplicationException::what()
 {
-	return message.c_str();
+    return message.c_str();
 }

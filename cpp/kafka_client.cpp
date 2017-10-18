@@ -24,38 +24,38 @@ bool running = true;
 // We could also do a static copy of RunProcess() and allow thread to call that directly
 void ProcessClientPageViews (ProcessCfg *cfg)
 {
-	try {
-		ClientPageViewConsumer cpv(cfg);
-		cpv.AddCounters(&eventCounter, &counterLock);
-		cpv.RunProcess(&running);
-	} catch (ApplicationException &e) {
-		cerr << e.what() << endl;
-		exit(EXIT_FAILURE);
-	}
+    try {
+        ClientPageViewConsumer cpv(cfg);
+        cpv.AddCounters(&eventCounter, &counterLock);
+        cpv.RunProcess(&running);
+    } catch (ApplicationException &e) {
+        cerr << e.what() << endl;
+        exit(EXIT_FAILURE);
+    }
 
 }
 void ProcessContentPageViews (ProcessCfg *cfg)
 {
-	try {
-		ContentPageViewConsumer cpv(cfg);
-		cpv.AddCounters(&eventCounter, &counterLock);
-		cpv.RunProcess(&running);
-	} catch (ApplicationException &e) {
-		cerr << e.what() << endl;
-		exit(EXIT_FAILURE);
-	}
+    try {
+        ContentPageViewConsumer cpv(cfg);
+        cpv.AddCounters(&eventCounter, &counterLock);
+        cpv.RunProcess(&running);
+    } catch (ApplicationException &e) {
+        cerr << e.what() << endl;
+        exit(EXIT_FAILURE);
+    }
 }
 
 void DisplayEventsProcessed () {
-	counterLock.lock();
-	double rate = eventCounter / (double)counterDisplaySeconds;
-	cout << eventCounter << " events processed (" << rate << "/s)" << endl;
-	eventCounter = 0;
-	counterLock.unlock();
+    counterLock.lock();
+    double rate = eventCounter / (double)counterDisplaySeconds;
+    cout << eventCounter << " events processed (" << rate << "/s)" << endl;
+    eventCounter = 0;
+    counterLock.unlock();
 }
 
 void GracefulShutdown (int signal) {
-	cout << "Exiting..." << endl;
+    cout << "Exiting..." << endl;
     running = false;
 }
 
@@ -98,10 +98,10 @@ int main (int argc, char **argv) {
 
     ProcessCfg *cfg;
     try {
-    	cfg = new ProcessCfg(configFile);
+        cfg = new ProcessCfg(configFile);
     } catch (ApplicationException &e) {
-    	cerr << e.what() << endl;
-    	exit(EXIT_FAILURE);
+        cerr << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
 
     signal(SIGINT, GracefulShutdown);
@@ -112,13 +112,13 @@ int main (int argc, char **argv) {
 
     while ( running )
     {
-    	DisplayEventsProcessed();
-    	sleep(counterDisplaySeconds);
+        DisplayEventsProcessed();
+        sleep(counterDisplaySeconds);
     }
 
     for ( uint i = 0; i < children.size(); i++ )
-    	if (children.at(i).joinable() )
-    		children.at(i).join();
+        if (children.at(i).joinable() )
+            children.at(i).join();
 
     delete cfg;
     exit(EXIT_SUCCESS);

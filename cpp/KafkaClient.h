@@ -20,33 +20,33 @@ using namespace std;
 
 class KafkaClient {
 private:
-	int64_t sourceReference;
-	string topic_name;
-	uint32_t partition;
+    int64_t sourceReference;
+    string topic_name;
+    uint32_t partition;
 
-	string message;
+    string message;
 
-	bool running;
-	bool debug;
+    bool running;
+    bool debug;
 
-	RdKafka::Conf *conf;
-	RdKafka::Conf *tconf;
+    RdKafka::Conf *conf;
+    RdKafka::Conf *tconf;
 
-	RdKafka::Consumer *consumer;
-	RdKafka::Topic *topic;
+    RdKafka::Consumer *consumer;
+    RdKafka::Topic *topic;
 
-	bool _ProcessMessage(RdKafka::Message *);
+    bool _ProcessMessage(RdKafka::Message *);
 
 public:
-	KafkaClient(ProcessCfg *);
-	virtual ~KafkaClient();
+    KafkaClient(ProcessCfg *);
+    virtual ~KafkaClient();
 
-	void SetDebug(bool);
-	void SetSourceReference(int64_t);
-	int64_t GetSourceReference();
-	void Start();
-	void Stop();
-	string *Read();
+    void SetDebug(bool);
+    void SetSourceReference(int64_t);
+    int64_t GetSourceReference();
+    void Start();
+    void Stop();
+    string *Read();
 };
 
 #endif /* KAFKACLIENT_H_ */

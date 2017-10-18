@@ -21,28 +21,28 @@ using namespace std;
 
 class ProcessCfg {
 private:
-	int batchCommitSize;
-	vector<string> brokers;
-	string topic;
-	bool kafkaDebug;
+    int batchCommitSize;
+    vector<string> brokers;
+    string topic;
+    bool kafkaDebug;
     PostgresCfg database;
 
-	void _ParseConfig(string);
+    void _ParseConfig(string);
 
 public:
-	ProcessCfg(string);
-	virtual ~ProcessCfg();
+    ProcessCfg(string);
+    virtual ~ProcessCfg();
 
-	void SetBatchSize(uint32_t);
-	uint32_t GetBatchSize(void);
+    void SetBatchSize(uint32_t);
+    uint32_t GetBatchSize(void);
 
-	void SetTopic(string);
-	string GetTopic(void);
+    void SetTopic(string);
+    string GetTopic(void);
 
-	PostgresCfg *GetDatabaseCfg(void);
-	vector<string> GetBrokers(void);
+    PostgresCfg *GetDatabaseCfg(void);
+    vector<string> GetBrokers(void);
 
-	bool DebugEnabled();
+    bool DebugEnabled();
 };
 
 #endif /* PROCESSCFG_H_ */

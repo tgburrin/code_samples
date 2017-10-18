@@ -16,11 +16,11 @@ using namespace std;
 
 class ClientPageViewConsumer : public MessageConsumer {
 private:
-	void _ProcessMessage(Json::Value);
+    void _ProcessMessage(Json::Value);
 
 public:
-	ClientPageViewConsumer(ProcessCfg *);
-	virtual ~ClientPageViewConsumer();
+    ClientPageViewConsumer(ProcessCfg *);
+    virtual ~ClientPageViewConsumer();
 };
 
 #endif /* CLIENTPAGEVIEWCONSUMER_H_ */

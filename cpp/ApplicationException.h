@@ -15,13 +15,13 @@ using namespace std;
 
 class ApplicationException : exception {
 private:
-	string message;
+    string message;
 
 public:
-	ApplicationException(string);
-	ApplicationException(const char *);
-	virtual ~ApplicationException() throw();
-	virtual const char* what();
+    ApplicationException(string);
+    ApplicationException(const char *);
+    virtual ~ApplicationException() throw();
+    virtual const char* what();
 };
 
 #endif /* APPLICATIONEXCEPTION_H_ */

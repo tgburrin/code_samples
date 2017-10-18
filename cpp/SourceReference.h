@@ -18,25 +18,25 @@ using namespace std;
 
 class SourceReference {
 private:
-	string sourceId;
-	PostgresDbh *dbh;
-	bool isPrivateDbh;
+    string sourceId;
+    PostgresDbh *dbh;
+    bool isPrivateDbh;
 
-	int64_t sourceRef;
-	bool isNull;
+    int64_t sourceRef;
+    bool isNull;
 
 
 public:
-	SourceReference(string, PostgresCfg *);
-	SourceReference(string, PostgresDbh *);
-	virtual ~SourceReference();
+    SourceReference(string, PostgresCfg *);
+    SourceReference(string, PostgresDbh *);
+    virtual ~SourceReference();
 
-	void RefreshFromDatabase();
-	void UpdateSourceRef(int64_t);
+    void RefreshFromDatabase();
+    void UpdateSourceRef(int64_t);
 
-	int64_t GetSourceRef();
-	bool IsNull();
-	string GetId();
+    int64_t GetSourceRef();
+    bool IsNull();
+    string GetId();
 };
 
 #endif /* SOURCEREFERENCE_H_ */
