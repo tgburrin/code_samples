@@ -14,6 +14,44 @@
         "database": "tgburrin"
     },
 
+    "client_action": {
+        "find": {
+            "function": "find_client",
+            "arguments": ["id"]
+        },
+        "insert": {
+            "function": "create_client",
+            "arguments": ["name"]
+        },
+        "update": {
+            "function": "update_client",
+            "arguments": ["id", "name"]
+        },
+        "delete": {
+            "function": "delete_client",
+            "arguments": ["id"]
+        }
+    },
+
+    "content_action": {
+        "find": {
+            "function": "find_content",
+            "arguments": ["client_id", "content_id"]
+        },
+        "insert": {
+            "function": "create_content",
+            "arguments": ["name"]
+        },
+        "update": {
+            "function": "update_content",
+            "arguments": ["id", "name"]
+        },
+        "delete": {
+            "function": "delete_content",
+            "arguments": ["id"]
+        }
+    },
+
     "client_message": {
         "legend": {
             "id": {"type": "string", "additional_validation": "UUID" },

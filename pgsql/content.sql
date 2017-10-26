@@ -42,113 +42,207 @@ create table if not exists client_counter (
     primary key (pageview_date, client_id)
 );
 
-create or replace function get_source_ref ( sid varchar(32) ) returns bigint as $$
-    declare
-        rv bigint;
+
+--- Source Reference procs
+create or replace function get_source_ref ( sid varchar(32), out source_reference bigint ) as $$
     begin
-        select source_ref_int into rv from source_ref where source_id = sid;
-        return rv;
+        select source_ref_int into source_reference from source_ref where source_id = sid;
     end
 $$ language plpgsql;
 
-create or replace function set_source_ref ( sid varchar(32), sr bigint ) returns bigint as $$
+create or replace function set_source_ref ( sid varchar(32), inout source_reference bigint ) as $$
     begin
-        IF sr IS NULL THEN
+        IF source_reference IS NULL THEN
             delete from source_ref where source_id = sid;
         ELSE
             update source_ref set
-                source_ref_int = sr
+                source_ref_int = source_reference
             where
                 source_id = sid;
 
             if NOT FOUND THEN
-                insert into source_ref (source_id, source_ref_int) values (sid, sr);
+                insert into source_ref (source_id, source_ref_int) values (sid, source_reference);
             end if;
         END IF;
-
-        return sr;
     end
 $$ language plpgsql;
 
-create or replace function get_message_ref ( ) returns bigint as $$
-    declare
-        rv bigint;
+create or replace function get_message_ref ( out source_reference bigint ) as $$
     begin
-        select get_source_ref into rv from get_source_ref('content_pv_queue');
-        return rv;
+        select get_source_ref into source_reference from get_source_ref('content_pv_queue');
     end
 $$ language plpgsql;
 
-create or replace function set_message_ref ( sr bigint ) returns bigint as $$
-    declare
-        rv bigint;
-
+create or replace function set_message_ref ( sr bigint, out source_reference bigint ) as $$
     begin
-        select set_source_ref into rv from set_source_ref('content_pv_queue', sr);
-        return rv;
+        select set_source_ref into source_reference from set_source_ref('content_pv_queue', sr);
     end
 $$ language plpgsql;
 
-create or replace function create_client( n text ) returns uuid as $$
+--- Client procs
+create or replace function find_client( i text default null ) returns setof client as $$
+    begin
+        return query
+        select
+            *
+        from
+            client c 
+        where
+            c.id = coalesce(i::uuid,id)
+        order by
+            c.id desc;
+    end
+$$ language plpgsql;
+
+create or replace function create_client( n text, out client_id text ) as $$
     declare
-        rv text;
         ctable text;
     begin
-        select (id) into rv from client where name = $1;
+        select (id) into client_id from client where name = $1;
         if not found then
             WITH inserted_rows AS (
                 insert into client (name) values ($1) returning client.id
-            ) select (id) into rv from inserted_rows;
+            ) select (id) into client_id from inserted_rows;
 
-            ctable := format('create table content_counter_%s (primary key (pageview_date,content_id)) inherits (content_counter)', replace(rv,'-',''));
+            ctable := format('create table content_counter_%s (primary key (pageview_date,content_id)) inherits (content_counter)', replace(client_id,'-',''));
             EXECUTE ctable;
         end if;
-        return rv;
     end
 $$ language plpgsql;
 
-create or replace function content_add ( client_id uuid, n text, u text ) returns uuid as $$
-    declare
-        rv text;
+create or replace function update_client( inout client_id text, n text, replacement bool default false ) as $$
     begin
-        select (id) into rv from content where url = $3;
+        if client_id is null then
+            RAISE EXCEPTION 'client_id may not be null';
+        end if;
+            
+        if replacement is null then
+            RAISE EXCEPTION 'invalid value for "replacment"';
+        end if;
+
+        if replacement = TRUE then
+            update client set
+                name = n
+            where
+                id = client_id::uuid;
+        else
+            update client set
+                name = COALESCE(n, name)
+            where
+                id = client_id::uuid;
+        end if;
+
+        if not found then
+            RAISE EXCEPTION 'client_id % was not found', client_id;
+        end if;
+    end
+$$ language plpgsql;
+
+create or replace function delete_client( inout client_id text ) as $$
+    declare
+        ctable text;
+    begin
+        if client_id is null then
+            RAISE EXCEPTION 'client_id may not be null';
+        end if;
+            
+        delete from client where id = client_id::uuid;
+        if not found then
+            RAISE EXCEPTION 'client_id % was not found', client_id;
+        else
+            ctable := format('drop table content_counter_%s', replace(client_id,'-',''));
+            EXECUTE ctable;
+        end if;
+    end
+$$ language plpgsql;
+
+--- Content Procs
+create or replace function find_content (  c text, i text ) returns setof content as $$
+    begin
+        --- client_id is required
+        if c is null then
+            RAISE EXCEPTION 'content_id may not be null';
+        end if;
+
+        return query
+        select
+            *
+        from
+            content c
+        where
+            c.id = coalesce(i::uuid,c.id)
+        and c.client_id = c::uuid
+        order by
+            c.id desc;
+    end
+$$ language plpgsql;
+
+create or replace function create_content ( c uuid, n text, u text, out rv text ) as $$
+    begin
+        select
+            (id) into rv
+        from
+            content
+        where
+            client_id = c::uuid
+        and name = n
+        and url = u;
 
         if not found then
             WITH inserted_rows AS (
-                insert into content (client_id, name, url) values ($1, $2, $3) returning content.*
+                insert into content (client_id, name, url) values (c, n, u) returning content.*
             ) select (id) into rv from inserted_rows;
         end if;
-
-        return rv;
     end
 $$ language plpgsql;
 
-create or replace function content_get ( u text ) returns uuid as $$
-    declare
-        rv text;
+create or replace function update_content( inout i text, n text, u text, replacement bool default false ) as $$
     begin
-        select id into strict rv from content where url = $1;
-        return rv;
-        EXCEPTION
-            WHEN NO_DATA_FOUND THEN
-                RAISE EXCEPTION 'url % not found', $1;
-            WHEN TOO_MANY_ROWS THEN
-                RAISE EXCEPTION 'url % not unique', $1;
+        if i is null then
+            raise exception 'content_id may not be null';
+        end if;
+
+        if replacement = TRUE then
+            update content set
+                name  = n,
+                url = u
+            where
+                id = i::uuid;
+        else
+            update content set
+                name = coalesce(n,name),
+                url = coalesce(u,name)
+            where
+                id = i::uuid;
+        end if;
+
+        if not found then
+            raise exception 'content_id % was not found', i;
+        end if;
     end
 $$ language plpgsql;
 
-create or replace function client_content_pageview ( i uuid, pvd timestamp ) returns bigint as $$
-    declare
-        rv bigint;
+create or replace function delete_content( inout i text ) as $$
+    begin
+        if i is null then
+            RAISE EXCEPTION 'content_id may not be null';
+        end if;
+
+        delete from content where id = i::uuid;
+        if not found then
+            RAISE EXCEPTION 'content id % was not found', i;
+        end if;
+    end
+$$ language plpgsql;
+
+--- Pageview Procs
+create or replace function client_content_pageview ( i uuid, pvd timestamp, out rv bigint ) as $$
     begin
         select client_pageview((select client_id from content where id = i), pvd) into rv;
-        return rv;
     end
 $$ language plpgsql;
 
-create or replace function client_pageview ( c uuid, pvd timestamp ) returns bigint as $$
-    declare
-        rv bigint;
+create or replace function client_pageview ( c uuid, pvd timestamp, out rv bigint ) as $$
     begin
         with pv_count as (
             insert into client_counter as cc
@@ -159,13 +253,10 @@ create or replace function client_pageview ( c uuid, pvd timestamp ) returns big
                 pageview_count = cc.pageview_count + 1
             returning cc.pageview_count
         ) select pageview_count into strict rv from pv_count;
-        return rv;
     end
 $$ language plpgsql;
 
-create or replace function content_pageview ( i uuid ) returns bigint as $$
-    declare
-        rv bigint;
+create or replace function content_pageview ( i uuid, out rv bigint ) as $$
     begin
         with pv_count as (
             insert into content_counter as cc
@@ -176,24 +267,20 @@ create or replace function content_pageview ( i uuid ) returns bigint as $$
                 pageview_count = cc.pageview_count + 1
             returning cc.pageview_count
         ) select pageview_count into strict rv from pv_count;
-        return rv;
     end
 $$ language plpgsql;
 
-create or replace function content_pageview ( i uuid, pvd timestamp ) returns bigint as $$
+create or replace function content_pageview ( i uuid, pvd timestamp, out rv bigint ) as $$
     declare
-        rv bigint;
         client_id text;
     begin
         select replace(c.client_id::text,'-','') into client_id from content c where c.id = $1;
         select content_pageview(client_id, i, pvd) into rv;
-        return rv;
     end
 $$ language plpgsql;
 
-create or replace function content_pageview ( c text, i uuid, pvd timestamp ) returns bigint as $$
+create or replace function content_pageview ( c text, i uuid, pvd timestamp, out rv bigint ) as $$
     declare
-        rv bigint;
         insert_statement text;
     begin
         ---
@@ -215,7 +302,5 @@ create or replace function content_pageview ( c text, i uuid, pvd timestamp ) re
             quote_literal(date(pvd)));
 
 	EXECUTE insert_statement into rv;
-        return rv;
     end
 $$ language plpgsql;
-
