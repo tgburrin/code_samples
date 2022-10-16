@@ -5,12 +5,13 @@
 
   vars:
     #ami_id: "ami-a4c7edb2"
-    ami_id: "ami-46c1b650" #CentOS marketplace ami
+    #ami_id: "ami-46c1b650" #CentOS 7 marketplace ami
+    ami_id: "ami-09a41e26df464c548" # Debian 11
     instance_type: "t2.nano"
 
   tasks:
     - debug: var=build_hosts
-    - include: make_ec2_instance.yml
+    - include_tasks: make_ec2_instance.yml
       with_items:
          - { name: 'database', type: 'pgsql_database', num: 1 }
          # - { name: 'citus', type: 'citus_database', num: 3 }
@@ -21,20 +22,25 @@
       loop_control:
         loop_var: inst
       when: build_hosts is defined and build_hosts == "true"
-
     - meta: refresh_inventory
 
 - hosts: localhost
   tasks:
+    - name: Collecting ec2 instance facts
+      amazon.aws.ec2_instance_info:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        region: "us-east-1"
+      register: ec2_instances
     - name: Building hostlist
       set_fact:
-        hostlist: "{{ hostlist|default([]) + [ { 'address': item, 'name': hostvars[item].ec2_tag_Name } ] }}"
-      with_items: "{{ groups['tag_automated_true'] }}"
-      when: groups['tag_automated_true'] is defined
+              ec2hostlist: "{{ ec2hostlist|default([]) + [ { 'address': item.private_ip_address, 'name': item.tags.Name } ] }}"
+      with_items: "{{ ec2_instances.instances }}"
+      when: item.tags.automated == "true" and item.private_ip_address is defined
     - file: path=/tmp/ec2hosts.ns state=absent
     - lineinfile:
         dest: /tmp/ec2hosts.ns
-        line: "server 172.16.1.1"
+        line: "server 172.16.1.5"
         state: present
         create: True
         backup: no
@@ -42,22 +48,22 @@
         dest: /tmp/ec2hosts.ns
         backup: no
         line: "update delete {{ item.name }}.ec2.tgburrin.net. A"
-      with_items: "{{ hostlist }}"
-      when: hostlist is defined
+      with_items: "{{ ec2hostlist }}"
+      when: ec2hostlist is defined
     - lineinfile:
         dest: /tmp/ec2hosts.ns
         backup: no
         insertafter: EOF
         line: "update add {{ item.name }}.ec2.tgburrin.net. 600 A {{ item.address }}"
-      with_items: "{{ hostlist }}"
-      when: hostlist is defined
+      with_items: "{{ ec2hostlist }}"
+      when: ec2hostlist is defined
     - lineinfile:
         dest: /tmp/ec2hosts.ns
         backup: no
         insertafter: EOF
         line: "send"
     - shell: "nsupdate < /tmp/ec2hosts.ns"
-      when: hostlist is defined
+      when: ec2hostlist is defined
 
 - hosts: tag_automated_true
   roles:

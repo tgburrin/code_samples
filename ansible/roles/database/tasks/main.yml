@@ -1,13 +1,23 @@
 ---
-- yum: name=https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm state=present
-  when: ansible_distribution == "CentOS"
+#- yum: name=https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm state=present
+#  when: ansible_distribution == "CentOS"
+#
+- name: Add postgres repo key
+  ansible.builtin.apt_key:
+    url: http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc
+    state: present
+
+- name: Add postgres repo
+  ansible.builtin.apt_repository:
+    repo: deb http://apt.postgresql.org/pub/repos/apt bullseye-pgdg main
+    state: present
 
 - name: Install postgres
   register: pgsql_install
-  yum: name={{ item }} state=present
+  package: name={{ item }} state=present
   with_items:
-    - postgresql96-server
-    - postgresql96-contrib
+    - postgresql-9.6
+    - postgresql-contrib-9.6
 
 - name: Add postgres utilities to path
   lineinfile:
@@ -16,7 +26,7 @@
     create: yes   
 
 - name: Create database
-  command: "{{ pgsql_bin_path }}/postgresql96-setup initdb"
+  command: "{{ pgsql_bin_path }}/initdb"
   args:
     creates: "{{ pgsql_data_path }}/postgresql.conf"
 

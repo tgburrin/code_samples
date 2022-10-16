@@ -3,23 +3,26 @@
 #- debug: var=inst
 
 - name: Provision a set of instances
-  ec2:
+  ec2_instance:
      aws_access_key: "{{ aws_access_key }}"
      aws_secret_key: "{{ aws_secret_key }}"
-     key_name: "{{ aws_key_name }}"
-     group: default
+     image_id: "{{ ami_id }}"
      instance_initiated_shutdown_behavior: "terminate"
      instance_type: "{{ inst.instance_type if inst.instance_type is defined else instance_type }}"
-     image: "{{ ami_id }}"
+     key_name: "{{ aws_key_name }}"
+     name: "{{ item }}"
+     network:
+        assign_public_ip: false
+        delete_on_termination: true
      region: "us-east-1"
-     vpc_subnet_id: "subnet-e389cbb9"
-     assign_public_ip: false
-     wait: true
-     instance_tags:
-        Name: "{{ item }}"
+     security_group: "default"
+     tags:
         instance_type: "{{ inst.type }}"
         cloud_provider: "aws"
         automated: "true"
+     termination_protection: false
+     vpc_subnet_id: "subnet-e389cbb9"
+     wait: true
   register: ec2
   with_sequence: start=1 end={{ inst.num }} format="{{ inst.name }}%02d"
 
@@ -27,7 +30,7 @@
 
 - name: Wait for SSH to come up
   wait_for:
-    host: "{{ item.instances[0].private_ip }}"
+    host: "{{ item.instances[0].private_ip_address }}"
     port: 22
     delay: 5
     timeout: 320
