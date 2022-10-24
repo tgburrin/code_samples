@@ -23,11 +23,24 @@
 #            {{ item }}
 #  with_items: "{{ ec2hostlist }}"
 
+- name: "Remove invalid hosts (AWS)"
+  lineinfile:
+    dest: "/etc/hosts"
+    state: absent
+    regexp: ".* # application host alias$"
+
 - name: "Add to hosts (AWS)"
   lineinfile:
     dest: "/etc/hosts"
-    line: "{{ item.address }} {{ item.internal_name }} {{ item.name }} {{ item.internal_name.split('.')[0] }}"
+    line: "{{ item.address }} {{ item.internal_name }} {{ item.name }} {{ item.internal_name.split('.')[0] }}  # application host alias"
   with_items: "{{ ec2hostlist }}"
+
+# Debian specific
+- name: "Update Repository cache"
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+    force_apt_get: true
 
 - name: "Add standard packages"
   package: name="{{ item }}" state=latest

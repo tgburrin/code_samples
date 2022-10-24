@@ -1,3 +1,5 @@
 ---
-pgsql_data_path: "/var/lib/postgresql/9.6/main"
+pgsql_cluster_name: "main"
+pgsql_data_path: "/var/lib/postgresql/9.6/{{ pgsql_cluster_name }}"
 pgsql_bin_path: "/usr/lib/postgresql/9.6/bin"
+pgsql_cfg_path: "/etc/postgresql/9.6/{{pgsql_cluster_name}}"

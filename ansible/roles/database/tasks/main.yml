@@ -12,6 +12,13 @@
     repo: deb http://apt.postgresql.org/pub/repos/apt bullseye-pgdg main
     state: present
 
+# Debian specific
+- name: "Update Repository cache"
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+    force_apt_get: true
+
 - name: Install postgres
   register: pgsql_install
   package: name={{ item }} state=present
@@ -28,23 +35,23 @@
 - name: Create database
   command: "{{ pgsql_bin_path }}/initdb"
   args:
-    creates: "{{ pgsql_data_path }}/postgresql.conf"
+    creates: "{{ pgsql_data_path }}/PG_VERSION"
 
 - name: Add listen address
   lineinfile:
-    dest: "{{ pgsql_data_path }}/postgresql.conf"
+    dest: "{{ pgsql_cfg_path }}/postgresql.conf"
     line: "listen_addresses = '*'"
     insertbefore: "listen_addresses = 'localhost'"
 
 - name: Fix HBA
   replace:
-    path: "{{ pgsql_data_path }}/pg_hba.conf"
+    path: "{{ pgsql_cfg_path }}/pg_hba.conf"
     regexp: '(^local.*|^host.*)(peer$|ident$)'
     replace: '\1trust'
 
 - name: Add Valid Networks
   lineinfile:
-    dest: "{{ pgsql_data_path }}/pg_hba.conf"
+    dest: "{{ pgsql_cfg_path }}/pg_hba.conf"
     line: "host     all     all     {{ item }}      md5"
     insertbefore: EOF
   with_items:
@@ -55,7 +62,16 @@
     - "172.16.1.96/27"
 
 - name: Start postgres
-  service: name=postgresql-9.6 state=started enabled=yes
+  service:
+    name: "postgresql@9.6-{{pgsql_cluster_name}}"
+    state: started
+    enabled: yes
+
+- name: Reload postgres
+  service:
+    name: "postgresql@9.6-{{pgsql_cluster_name}}"
+    state: reloaded
+    enabled: yes
 
 - name: Create Users
   script: create_users.sh

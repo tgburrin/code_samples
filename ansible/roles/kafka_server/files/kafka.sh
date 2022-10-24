@@ -1,0 +1,1 @@
+export KAFKA_HEAP_OPTS="-Xmx128M"

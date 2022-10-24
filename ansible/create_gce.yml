@@ -21,7 +21,7 @@
          #- { name: 'webserver', type: 'webserver', num: 1 }
          #- { name: 'webclient', type: 'webclient', num: 1 }
          #- { name: 'kafkaclient', type: 'kafka_client', num: 1 }
-         #- { name: 'kafka', type: 'kafka_queue', instance_type: "n1-standard-1", num: 1 }
+         #- { name: 'kafkaserver', type: 'kafka_queue', instance_type: "n1-standard-1", num: 1 }
       loop_control:
         loop_var: inst
       when: build_hosts is defined and build_hosts == "true"
