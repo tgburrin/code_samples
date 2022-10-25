@@ -1,1 +1,1 @@
-export KAFKA_HEAP_OPTS="-Xmx64M"
+#export KAFKA_HEAP_OPTS="-Xmx64M"

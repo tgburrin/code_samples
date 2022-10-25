@@ -9,7 +9,7 @@
     state: latest
   with_items:
     - gcc
-    - gcc-c++
+    - g++
     - cmake
     - make
 
@@ -53,10 +53,10 @@
     group: root
     mode: 0755
 
-- shell: bash --login -c make
+- shell: bash --login -c "make clean && make -j2"
   args:
     chdir: /installs/code_samples/c
 
-- shell: bash --login -c make
+- shell: bash --login -c "make clean && make -j2"
   args:
     chdir: /installs/code_samples/cpp/Default

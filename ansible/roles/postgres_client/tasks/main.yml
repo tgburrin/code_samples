@@ -15,8 +15,8 @@
   register: pgsql_install
   package: name={{ item }} state=present
   with_items:
-    - postgresql96-devel
-    - postgresql96-contrib
+    - postgresql-client-9.6
+    - postgresql-server-dev-9.6
 
 - name: Add postgres utilities to path
   lineinfile:

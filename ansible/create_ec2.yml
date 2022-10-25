@@ -14,12 +14,12 @@
     - include_tasks: make_ec2_instance.yml
       with_items:
          - { name: 'database', type: 'pgsql_database', num: 1 }
-           ## - { name: 'citus', type: 'citus_database', num: 3 }
-           #- { name: 'webserver', type: 'webserver', num: 1 }
-           #- { name: 'webclient', type: 'webclient', num: 1 }
-           #- { name: 'kafkaclient', type: 'kafka_client', num: 1 }
-           #- { name: 'kafkaserver', type: 'kafka_queue', instance_type: "t2.small", num: 1 }
-         - { name: 'kafkaserver', type: 'kafka_queue', num: 1 }
+         - { name: 'webserver', type: 'webserver', num: 1 }
+         - { name: 'webclient', type: 'webclient', num: 1 }
+         - { name: 'kafkaclient', type: 'kafka_client', num: 1 }
+         - { name: 'kafkaserver', type: 'kafka_queue', instance_type: "t2.small", num: 1 }
+           #- { name: 'citus', type: 'citus_database', num: 3 }
+           #- { name: 'kafkaserver', type: 'kafka_queue', num: 1 }
       loop_control:
         loop_var: inst
       when: build_hosts is defined and build_hosts == "true"
@@ -68,28 +68,35 @@
 
 - hosts: tag_automated_true
   roles:
-    - common
+    - role: common
+      when: maintain_hosts is defined and maintain_hosts == "true"
 
 - hosts: tag_instance_type_pgsql_database
   roles:
+    - common
     - database
 
 - hosts: tag_instance_type_kafka_client
   roles:
+    - common
     - kafka_client
 
 - hosts: tag_instance_type_webserver
   roles:
+    - common
     - webserver
 
 - hosts: tag_instance_type_kafka_queue
   roles:
+    - common
     - kafka_server
 
 - hosts: tag_instance_type_webclient
   roles:
+    - common
     - webclient
 
 - hosts: tag_instance_type_citus_database
   roles:
+    - common
     - citus

@@ -49,6 +49,7 @@
     - bind9-utils # bind-utils for centos
     - sysstat
     - gpg
+    - pkg-config
 
 #- file: path=/installs/code_samples state=absent
 
