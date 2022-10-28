@@ -34,7 +34,7 @@ void SourceReference::RefreshFromDatabase()
     isNull = true;
 
     vector<string> args = {sourceId};
-    uint64_t rows = dbh->ExecuteStatement("select * from get_source_ref($1)", args);
+    uint64_t rows = dbh->ExecuteStatement("select * from pageview.get_source_ref($1)", args);
     if ( rows ) {
         vector< vector<char *> > tbl = dbh->GetRows();
         if ( tbl[0][0] != NULL ) {
@@ -62,7 +62,7 @@ bool SourceReference::IsNull()
 void SourceReference::UpdateSourceRef(int64_t sr)
 {
     vector<string> args = {sourceId, to_string(sr)};
-    uint64_t rows = dbh->ExecuteStatement("select * from set_source_ref($1,$2)", args);
+    uint64_t rows = dbh->ExecuteStatement("select * from pageview.set_source_ref($1,$2)", args);
     if ( rows ) {
         vector< vector<char *> > tbl = dbh->GetRows();
         sourceRef = stoull(tbl[0][0]);
