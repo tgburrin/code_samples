@@ -5,10 +5,11 @@ import java.util.UUID;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
+import net.tgburrin.pageview_svc.DatabaseRecordInterface;
 import net.tgburrin.pageview_svc.InvalidDataException;
 
-@Table(name = "client", schema = "pageview")
-public class Client {
+@Table(name = "client")
+public class Client implements DatabaseRecordInterface<Client> {
 	@Id
 	private UUID id;
 	private String name;
@@ -23,12 +24,15 @@ public class Client {
 		this.name = name;
 	}
 
+	@Override
 	public void validateRecord() throws InvalidDataException {
 		if(this.name == null || this.name.equals(""))
 			throw new InvalidDataException("A valid group name must be specified");
 	}
-	public void mergeUpdate(Client nc) {
-		if ( nc.name != null )
-			name = nc.name;
+
+	@Override
+	public void mergeUpdate(Client newRecord) {
+		if ( newRecord.name != null )
+			name = newRecord.name;
 	}
 }

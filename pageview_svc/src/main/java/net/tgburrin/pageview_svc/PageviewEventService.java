@@ -5,7 +5,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class PageviewKafkaService {
+public class PageviewEventService {
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
     private final static String topic = "pageview";

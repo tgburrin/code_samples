@@ -14,13 +14,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.tgburrin.pageview_svc.InvalidDataException;
-import net.tgburrin.pageview_svc.PageviewKafkaService;
+import net.tgburrin.pageview_svc.PageviewEventService;
 
 @RestController
 @RequestMapping(path = "/v{apiVersion}/pageview")
 public class PageviewController {
 	@Autowired
-	private PageviewKafkaService pks;
+	private PageviewEventService pks;
 
     @Autowired
     private ObjectMapper objectMapper;

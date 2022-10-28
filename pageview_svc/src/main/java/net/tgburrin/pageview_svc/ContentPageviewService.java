@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import net.tgburrin.pageview_svc.client.Client;
 import net.tgburrin.pageview_svc.client.ClientRepository;
+import net.tgburrin.pageview_svc.content.Content;
 import net.tgburrin.pageview_svc.content.ContentRepository;
 
 @Service
@@ -55,5 +56,16 @@ public class ContentPageviewService {
 
 		c.validateRecord();
 		return clientRepository.save(c); // this is done to allow triggers to add data
+	}
+
+	public Content addContent(Content newContent) {
+		return null;
+	}
+
+	public Content findContentById(UUID id) throws InvalidRecordException {
+		Optional<Content> c = contentRepository.findById(id);
+		if ( !c.isPresent() )
+			throw new InvalidRecordException("Content "+id+" could not be located");
+		return c.get();
 	}
 }

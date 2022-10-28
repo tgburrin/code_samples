@@ -7,8 +7,11 @@ import java.util.UUID;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table(name = "content", schema = "pageview")
-public class Content {
+import net.tgburrin.pageview_svc.DatabaseRecordInterface;
+import net.tgburrin.pageview_svc.InvalidDataException;
+
+@Table(name = "content")
+public class Content implements DatabaseRecordInterface<Content> {
 	@Id
 	private UUID id;
 
@@ -30,5 +33,17 @@ public class Content {
 	}
 	public void setUrl(URL url) {
 		this.url = url.toString();
+	}
+
+	@Override
+	public void validateRecord() throws InvalidDataException {
+	}
+
+	@Override
+	public void mergeUpdate(Content newRecord) {
+		if ( newRecord.name != null )
+			name = newRecord.name;
+		if ( newRecord.url != null )
+			url = newRecord.url;
 	}
 }

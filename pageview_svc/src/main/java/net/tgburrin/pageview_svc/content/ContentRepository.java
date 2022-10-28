@@ -9,9 +9,9 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
 public interface ContentRepository extends CrudRepository<Content, UUID> {
-	@Query("select id, name, url, client_id from pageview.content where name=:name")
+	@Query("select id, name, url, client_id from content where name=:name")
 	List<Content> findByName(@Param("name") String name);
 
-	@Query("select id, name, url, client_id from pageview.content where url=:url")
+	@Query("select id, name, url, client_id from content where url=:url")
 	Content findByUrl(@Param("url") URL url);
 }

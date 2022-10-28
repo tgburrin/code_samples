@@ -22,7 +22,7 @@ public class AppConfiguration {
 		return new NamingStrategy() {
 			@Override
 			public String getSchema() {
-				return "pageview_svc";
+				return "pageview";
 			}
 		};
 	}

@@ -9,6 +9,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ClientRepository extends CrudRepository<Client, UUID> {
-	@Query("select id, name from pageview.client where name=:name")
+	@Query("select id, name from client where name=:name")
 	Client findByName(@Param("name") String name);
 }
