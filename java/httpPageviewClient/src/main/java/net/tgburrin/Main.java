@@ -5,21 +5,20 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 public class Main extends Thread {
 	private static AtomicInteger msgCounter = new AtomicInteger(0);
 	private static int statsTimeSec = 5;
 
-	private static String webHost = "webserver01:8080";
+	private static String webHost = "localhost:8080";
 	private static String apiVersion = "v1";
 	private static String urlBase = "/" + apiVersion + "/content";
 
@@ -45,8 +44,8 @@ public class Main extends Thread {
 		for (int i = 0; i < numberOfViews; i++) {
 			try {
 				HttpRequest req = HttpRequest.newBuilder()
-						.uri(URI.create("http://" + webHost + "/" + apiVersion + "/pageview/" + contentId))
-						.POST(BodyPublishers.noBody()).build();
+						.uri(URI.create("http://" + webHost + "/" + apiVersion + "/pageview/content/" + contentId))
+						.GET().build();
 
 				HttpResponse<String> resp = cli.send(req, BodyHandlers.ofString());
 
@@ -66,18 +65,18 @@ public class Main extends Thread {
 	public static ArrayList<String> getContentIds() throws Exception {
 		HttpClient cli = HttpClient.newBuilder().version(Version.HTTP_2).build();
 
-		HttpRequest req = HttpRequest.newBuilder().uri(URI.create("http://" + webHost + "/" + urlBase)).GET().build();
+		HttpRequest req = HttpRequest.newBuilder().uri(URI.create("http://" + webHost + "/" + urlBase + "/list")).GET().build();
 
 		HttpResponse<String> resp = cli.send(req, BodyHandlers.ofString());
 		String body = resp.body();
 
 		if (resp.statusCode() != 200)
-			throw new Exception("Could not get content list: " + body);
+			throw new Exception("Could not get content list ("+resp.statusCode()+"): " + body);
 
 		ArrayList<String> contentIds = new ArrayList<String>();
-		JsonObject payload = (new JsonParser().parse(body)).getAsJsonObject();
-		if (payload.has("data") && payload.get("data").isJsonArray()) {
-			for (JsonElement cid : payload.getAsJsonArray("data"))
+		JsonArray payload = (new JsonParser().parse(body)).getAsJsonArray();
+		if (payload.size() > 0) {
+			for (JsonElement cid : payload)
 				contentIds.add(cid.getAsJsonObject().get("id").getAsString());
 		}
 

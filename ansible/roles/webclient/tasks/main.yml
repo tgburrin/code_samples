@@ -15,6 +15,7 @@
 - lineinfile:
     dest: /etc/profile.d/gradle.sh
     line: "export PATH=${PATH}:/opt/gradle-{{ gradle_version }}/bin"
+    regexp: "^export PATH"
     create: yes
     mode: 0755
     owner: root
@@ -23,4 +24,5 @@
 - shell: "source /etc/profile.d/gradle.sh && gradle build"
   args:
     chdir: "/installs/code_samples/java"
-    creates: "/installs/code_samples/java/httpPageviewClient/build/libs/httpPageviewClient-all.jar"
+    creates: "/installs/code_samples/java/httpPageviewClient/build/libs/httpPageviewClient.jar"
+    executable: /usr/bin/bash

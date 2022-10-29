@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TOTAL=`psql -t -U postgres << EOF
+TOTAL=`psql -Xt -U postgres << EOF
 select u.usename from pg_catalog.pg_user u where u.usename='tgburrin';
 EOF`
 
@@ -13,11 +13,11 @@ create database tgburrin with owner tgburrin;
 drop schema public;
 EOF
 
-  psql -U tgburrin << EOF
+  psql -X -U tgburrin << EOF
 create schema tgburrin;
 EOF
 
-  psql -U postgres tgburrin << EOF
+  psql -X -U postgres tgburrin << EOF
 CREATE EXTENSION "uuid-ossp" with SCHEMA tgburrin;
 EOF
 fi

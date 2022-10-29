@@ -1,7 +1,15 @@
 ---
-- package: name="{{ item }}" state=latest
-  with_items:
-    - golang
+#- package: name="{{ item }}" state=latest
+#  with_items:
+#    - golang-1.19-go
+
+- name: decompress go
+  ansible.builtin.unarchive:
+    src: https://go.dev/dl/go1.19.2.linux-amd64.tar.gz
+    dest: /usr/local/
+    remote_src: yes
+
+- shell: bash --login -c "update-alternatives --install /usr/bin/go go /usr/local/go/bin/go 0"
 
 - file:
     dest: /installs/go_packages
@@ -10,6 +18,14 @@
 - lineinfile:
     path: /etc/profile.d/go.sh
     line: "export GOPATH=/installs/go_packages"
+    create: yes
+    owner: root
+    group: root
+    mode: 0755
+
+- lineinfile:
+    path: /etc/profile.d/go.sh
+    line: "export GO111MODULE=off"
     create: yes
     owner: root
     group: root
