@@ -1,7 +1,9 @@
 ---
 - package: name="{{ item }}" state=latest
   with_items:
-    - golang
+    - golang-1.19-go
+
+- shell: bash --login -c "update-alternatives --install /usr/bin/go go /usr/lib/go-1.19/bin/go 0"
 
 - file:
     dest: /installs/go_packages
@@ -10,6 +12,14 @@
 - lineinfile:
     path: /etc/profile.d/go.sh
     line: "export GOPATH=/installs/go_packages"
+    create: yes
+    owner: root
+    group: root
+    mode: 0755
+
+- lineinfile:
+    path: /etc/profile.d/go.sh
+    line: "export GO111MODULE=off"
     create: yes
     owner: root
     group: root
