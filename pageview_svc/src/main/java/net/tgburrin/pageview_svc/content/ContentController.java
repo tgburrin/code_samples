@@ -1,7 +1,6 @@
 package net.tgburrin.pageview_svc.content;
 
 import java.util.ArrayList;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,18 +37,12 @@ public class ContentController {
 	@ResponseStatus(HttpStatus.OK)
 	@GetMapping(value="/find/{id}", produces = "application/json")
 	public Content getContent(@PathVariable Integer apiVersion, @PathVariable("id")  UUID contentId) throws InvalidRecordException  {
-		Optional<Content> c = psvc.findById(contentId);
-		if ( !c.isPresent() )
-			throw new InvalidRecordException("Id "+contentId+" could not be located");
-		return c.get();
+		return pvsvc.findContentById(contentId);
 	}
 
 	@ResponseStatus(HttpStatus.OK)
 	@GetMapping(value="/list", produces = "application/json")
 	public ArrayList<Content> listContent(@PathVariable Integer apiVersion) {
-		ArrayList<Content> rv = new ArrayList<Content>();
-		for ( Content c : contentRepo.findAll() )
-			rv.add(c);
-		return rv;
+		return pvsvc.listAllContent();
 	}
 }

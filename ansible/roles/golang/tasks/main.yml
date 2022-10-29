@@ -1,9 +1,15 @@
 ---
-- package: name="{{ item }}" state=latest
-  with_items:
-    - golang-1.19-go
+#- package: name="{{ item }}" state=latest
+#  with_items:
+#    - golang-1.19-go
 
-- shell: bash --login -c "update-alternatives --install /usr/bin/go go /usr/lib/go-1.19/bin/go 0"
+- name: decompress go
+  ansible.builtin.unarchive:
+    src: https://go.dev/dl/go1.19.2.linux-amd64.tar.gz
+    dest: /usr/local/
+    remote_src: yes
+
+- shell: bash --login -c "update-alternatives --install /usr/bin/go go /usr/local/go/bin/go 0"
 
 - file:
     dest: /installs/go_packages

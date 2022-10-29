@@ -6,6 +6,7 @@
   vars:
     #ami_id: "ami-a4c7edb2"
     #ami_id: "ami-46c1b650" #CentOS 7 marketplace ami
+    cloud_provider: "aws"
     ami_id: "ami-09a41e26df464c548" # Debian 11
     instance_type: "t2.nano"
 

@@ -1,5 +1,6 @@
 package net.tgburrin.pageview_svc;
 
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -67,5 +68,12 @@ public class ContentPageviewService {
 		if ( !c.isPresent() )
 			throw new InvalidRecordException("Content "+id+" could not be located");
 		return c.get();
+	}
+
+	public ArrayList<Content> listAllContent() {
+		ArrayList<Content> rv = new ArrayList<Content>();
+		for (Content c : contentRepository.findAll() )
+			rv.add(c);
+		return rv;
 	}
 }
