@@ -32,11 +32,7 @@ type PostgresCfg struct {
 }
 
 func NewPostgresCfg(loginDetails map[string]interface{}) (pCFG *PostgresCfg) {
-	pCFG = new(PostgresCfg)
-
-	pCFG.hostname = "localhost"
-	pCFG.port = 5432
-	pCFG.sslmode = "disable"
+	pCFG = &PostgresCfg{hostname: "localhost", port: 5432, sslmode: "disable"}
 
 	for k, v := range loginDetails {
 		if k == "type" {
@@ -63,17 +59,12 @@ func NewPostgresCfg(loginDetails map[string]interface{}) (pCFG *PostgresCfg) {
 			} else if reflect.TypeOf(v).Kind() == reflect.String {
 				// Not implemented yet
 				switch v.(string) {
-				case "require":
-					fallthrough
-				case "disable":
+				case "require", "disable":
 					mode = v.(string)
-				case "strict":
-					fallthrough
 				default:
-					mode = "verify-full" // default unknown string, go with strict
+					mode = "verify-full"
 				}
 			}
-
 			if mode != "" {
 				pCFG.sslmode = mode
 			}
@@ -114,6 +105,95 @@ func (pCFG *PostgresCfg) GetURI() (rv string) {
 	return rv
 }
 
+type postgresFunctionExecutor struct {
+	NumAffectedLastOp int64
+	Record            []interface{}
+
+	dbh               *sql.DB
+	functionName      string
+	functionArguments []interface{}
+	dmlArguments      []interface{}
+	dmlStatement      string
+}
+
+func NewPostgresFunctionExecutor(dbh *sql.DB, functionName string, functionArguments []interface{}) (pFE postgresFunctionExecutor, err error) {
+	if dbh == nil {
+		return pFE, errors.New("Invalid database handle provided")
+	}
+
+	pFE = postgresFunctionExecutor{}
+	pFE.dbh = dbh
+	pFE.functionName = functionName
+	pFE.functionArguments = functionArguments
+
+	return pFE, err
+}
+
+func (pFE *postgresFunctionExecutor) ExecuteProc(procArgs map[string]interface{}, args ...string) (err error) {
+	statement := bytes.NewBufferString("select * from " + pFE.functionName + "(")
+
+	placeholders := []string{}
+	placeholderCounter := int64(1)
+
+	for _, fieldName := range pFE.functionArguments {
+		placeholders = append(placeholders, "$"+strconv.FormatInt(placeholderCounter, 10))
+		if v, ok := procArgs[fieldName.(string)]; ok {
+			pFE.dmlArguments = append(pFE.dmlArguments, v)
+		} else {
+			pFE.dmlArguments = append(pFE.dmlArguments, nil)
+		}
+		placeholderCounter += 1
+	}
+
+	if placeholderCounter > 0 {
+		statement.WriteString(strings.Join(placeholders, ","))
+	}
+	statement.WriteString(")")
+
+	pFE.dmlStatement = statement.String()
+
+	rows, err := pFE.dbh.Query(pFE.dmlStatement, pFE.dmlArguments...)
+	if err != nil {
+		return err
+	}
+
+	var row map[string]interface{}
+	columns, _ := rows.Columns()
+	count := len(columns)
+
+	counter := int64(0)
+	for rows.Next() {
+		values := make([]interface{}, count)
+		valuePtrs := make([]interface{}, count)
+		for i, _ := range columns {
+			valuePtrs[i] = &values[i]
+		}
+		rows.Scan(valuePtrs...)
+
+		row = make(map[string]interface{})
+
+		for i, col := range columns {
+			var v interface{}
+			val := values[i]
+			b, ok := val.([]byte)
+			if ok {
+				v = string(b)
+			} else {
+				v = val
+			}
+
+			row[col] = v
+		}
+		counter += 1
+
+		pFE.Record = append(pFE.Record, row)
+	}
+
+	pFE.NumAffectedLastOp = counter
+
+	return err
+}
+
 // Postgres Database Handle object and functions
 type postgresDataHandler struct {
 	Id                map[string]interface{}
@@ -139,20 +219,19 @@ func GetDatabaseHandle(loginDetails map[string]interface{}) (dbh *sql.DB, err er
 
 	if hn, ok := loginDetails["hostname"]; ok && strings.HasPrefix(hn.(string), "postgresql://") {
 		connDetailString = hn.(string)
-	} else {
-		cfg := NewPostgresCfg(loginDetails)
-		connDetailString = cfg.GetURI()
+		dbh, err = sql.Open("postgres", connDetailString)
+		if err != nil {
+			return dbh, err
+		}
+
+		dbh.SetMaxIdleConns(50)
+		dbh.SetMaxOpenConns(200)
+
+		return
 	}
 
-	dbh, err = sql.Open("postgres", connDetailString)
-	if err != nil {
-		return dbh, err
-	}
-
-	dbh.SetMaxIdleConns(50)
-	dbh.SetMaxOpenConns(200)
-
-	return dbh, err
+	dbh, err = GetDatabaseHandleFromCfg(NewPostgresCfg(loginDetails))
+	return
 }
 
 func GetDatabaseHandleFromCfg(cfg *PostgresCfg) (dbh *sql.DB, err error) {
