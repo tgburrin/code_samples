@@ -1,7 +1,12 @@
 {
+    "pageview_connection": {
+        "brokers": ["localhost:9092"],
+        "topic": "messages"
+    },
+
     "content_connection": {
         "type": "static",
-        "hostname": "database01",
+        "hostname": "localhost",
         "ssl": false,
         "port": 5432,
         "username": "tgburrin",
@@ -9,22 +14,64 @@
         "database": "tgburrin"
     },
 
-    "content_table": {
-        "name": "content",
-        "pk": ["id"],
-        "unique": {
-            "by_url": ["url"]
+    "client_action": {
+        "find": {
+            "function": "find_client",
+            "arguments": ["id"]
+        },
+        "insert": {
+            "function": "create_client",
+            "arguments": ["name"]
+        },
+        "update": {
+            "function": "update_client",
+            "arguments": ["id", "name"]
+        },
+        "delete": {
+            "function": "delete_client",
+            "arguments": ["id"]
         }
     },
 
-    "pageview_connection": {
-        "brokers": ["kafka01:9092"],
-        "topic": "messages"
+    "content_action": {
+        "find": {
+            "function": "find_content",
+            "arguments": ["client_id", "content_id"]
+        },
+        "insert": {
+            "function": "create_content",
+            "arguments": ["name"]
+        },
+        "update": {
+            "function": "update_content",
+            "arguments": ["id", "name"]
+        },
+        "delete": {
+            "function": "delete_content",
+            "arguments": ["id"]
+        }
     },
 
-    "content_schema": {
+    "client_message": {
         "legend": {
             "id": {"type": "string", "additional_validation": "UUID" },
+            "name": {"type": "string", "additional_validation": { "length": [1,"max"] } }
+        },
+        "required_fields": {
+            "default": {},
+            "initial": {},
+            "all": {},
+            "insert": { "fields": ["name"] },
+            "delete": { "fields": ["id"] },
+            "replace": { "fields": ["id","name"] },
+            "update": { "fields": ["id","name"] }
+        }
+    },
+
+    "content_message": {
+        "legend": {
+            "id": {"type": "string", "additional_validation": "UUID" },
+            "client_id": {"type": "string", "additional_validation": "UUID" },
             "name": {"type": "string", "additional_validation": { "length": [1,"max"] } },
             "url": {"type": "string", "additional_validation": { "length": [1, 255] } }
         },
@@ -32,9 +79,9 @@
             "default": {},
             "initial": {},
             "all": {},
-            "insert": { "fields": ["name","url"] },
+            "insert": { "fields": ["client_id", "name","url"] },
             "delete": { "fields": ["id"] },
-            "replace": { "fields": ["id", "name", "url"] },
+            "replace": { "fields": ["id", "client_id", "name", "url"] },
             "update": { "fields": ["id"], "require_an_optional": true }
         }
     }
