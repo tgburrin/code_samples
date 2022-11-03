@@ -1,8 +1,10 @@
 #!/usr/bin/bash
 
+. /etc/profile.d/go.sh
+
 BASE=`realpath $0`
 
-export GOPATH=`dirname $BASE`/pageviewcount_service
+#export GOPATH=`dirname $BASE`/pageviewcount_service
 echo "Using a base path of $GOPATH"
 
 cd $GOPATH || exit 1
