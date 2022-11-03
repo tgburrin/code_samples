@@ -1,4 +1,9 @@
 ---
+- name: "Add additional packages"
+  package: name="{{ item }}" state=latest
+  with_items:
+    - gcc
+
 - copy:
     src: download_dependencies.sh
     dest: /installs/
