@@ -1,12 +1,12 @@
 {
     "pageview_connection": {
-        "brokers": ["localhost:9092"],
+        "brokers": ["kafkaserver.tgburrin.net:9092"],
         "topic": "messages"
     },
 
     "content_connection": {
         "type": "static",
-        "hostname": "localhost",
+        "hostname": "database.tgburrin.net",
         "ssl": false,
         "port": 5432,
         "username": "tgburrin",
@@ -14,11 +14,22 @@
         "database": "tgburrin"
     },
 
+    "table_configs": {
+	"client": {
+		"pk": ["id"]
+	},
+	"content": {
+		"pk": ["id"]
+	}
+    },
+
     "client_action": {
         "find": {
             "function": "find_client",
             "arguments": ["id"]
         },
+	"findall": {
+	},
         "insert": {
             "function": "create_client",
             "arguments": ["name"]

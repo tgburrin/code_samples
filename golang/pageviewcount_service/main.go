@@ -93,12 +93,16 @@ func main() {
 	api_r := smux.PathPrefix("/v" + processConfig.ApiVersion).Subrouter()
 
 	client_r := api_r.PathPrefix("/client").Subrouter()
-	HandlerWrapper(client_r, "/", apphandlers.InsertClientHandler)
-	HandlerWrapper(client_r, "/{id:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}}", apphandlers.UpdateClientHandler)
+	HandlerWrapper(client_r, "/maintain", apphandlers.InsertClientHandler)
+	HandlerWrapper(client_r, "/maintain/{id:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}}", apphandlers.UpdateClientHandler)
+	HandlerWrapper(client_r, "/read/find/{id:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}}", apphandlers.FindOneClientHandler)
+	HandlerWrapper(client_r, "/read/list", apphandlers.FindManyClientHandler)
 
 	content_r := api_r.PathPrefix("/content").Subrouter()
-	HandlerWrapper(content_r, "/", apphandlers.InsertContentHandler)
-	HandlerWrapper(content_r, "/{id:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}}", apphandlers.UpdateContentHandler)
+	HandlerWrapper(content_r, "/maintain", apphandlers.InsertContentHandler)
+	HandlerWrapper(content_r, "/maintain/{id:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}}", apphandlers.UpdateContentHandler)
+	//HandlerWrapper(content_r, "/read/find/{id:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}}", apphandlers.FindOneContentHandler)
+	HandlerWrapper(content_r, "/read/list", apphandlers.FindManyContentHandler)
 
 	pageview_r := api_r.PathPrefix("/pageview").Subrouter()
 	HandlerWrapper(pageview_r, "/{id:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}}", apphandlers.ProcessPageviewHandler)

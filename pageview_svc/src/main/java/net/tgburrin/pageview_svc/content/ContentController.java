@@ -35,13 +35,13 @@ public class ContentController {
 	}
 
 	@ResponseStatus(HttpStatus.OK)
-	@GetMapping(value="/find/{id}", produces = "application/json")
+	@GetMapping(value="/read/find/{id}", produces = "application/json")
 	public Content getContent(@PathVariable Integer apiVersion, @PathVariable("id")  UUID contentId) throws InvalidRecordException  {
 		return pvsvc.findContentById(contentId);
 	}
 
 	@ResponseStatus(HttpStatus.OK)
-	@GetMapping(value="/list", produces = "application/json")
+	@GetMapping(value="/read/list", produces = "application/json")
 	public ArrayList<Content> listContent(@PathVariable Integer apiVersion) {
 		return pvsvc.listAllContent();
 	}

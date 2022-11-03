@@ -41,7 +41,7 @@ public class ClientController {
 	}
 
 	@ResponseStatus(HttpStatus.OK)
-	@GetMapping(value="/maintain/{id}", produces = "application/json")
+	@GetMapping(value="/read/find/{id}", produces = "application/json")
 	public Client updateClient(@PathVariable Integer apiVersion, @PathVariable("id")  UUID clientId) throws InvalidRecordException {
 		return pvsvc.findClientById(clientId);
 	}
