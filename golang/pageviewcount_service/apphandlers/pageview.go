@@ -12,7 +12,7 @@ import (
 
 func ProcessPageviewHandler(processConfig common.ProcessConfiguration, w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	case "POST":
+	case "GET":
 		inputDoc, err := combineInput(w, r)
 		if err != nil {
 			log.Print(err.Error())
@@ -35,7 +35,7 @@ func ProcessPageviewHandler(processConfig common.ProcessConfiguration, w http.Re
 
 		queueMsg := make(map[string]interface{})
 		common.SetKey(queueMsg, "type", "content_pageview")
-		common.SetKey(queueMsg, "id", inputDoc["id"].(string))
+		common.SetKey(queueMsg, "content_id", inputDoc["id"].(string))
 		common.SetKey(queueMsg, "pageview_dt", time.Now().Format(processConfig.TimeFormat))
 
 		if err = sendMessage(processConfig, queueMsg); err != nil {

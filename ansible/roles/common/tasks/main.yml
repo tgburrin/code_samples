@@ -51,7 +51,7 @@
     cache_valid_time: 3600
     force_apt_get: true
 
-- name: "Add standard packages"
+- name: Add standard packages
   package: name="{{ item }}" state=latest
   with_items:
     - git
@@ -60,7 +60,7 @@
     - gpg
     - pkg-config
 
-#- file: path=/installs/code_samples state=absent
+- file: path=/installs/code_samples state=absent
 
 - name: "Get git repository"
   file: path=/installs state=directory

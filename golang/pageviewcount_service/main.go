@@ -120,7 +120,7 @@ func main() {
 	HandlerWrapper(content_r, "/read/list", apphandlers.FindManyContentHandler)
 
 	pageview_r := api_r.PathPrefix("/pageview").Subrouter()
-	HandlerWrapper(pageview_r, "/{id:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}}", apphandlers.ProcessPageviewHandler)
+	HandlerWrapper(pageview_r, "/content/{id:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}}", apphandlers.ProcessPageviewHandler)
 
 	var loggedRouter http.Handler
 	if processConfig.DebugOutput {
