@@ -65,7 +65,7 @@ public class Main extends Thread {
 	public static ArrayList<String> getContentIds() throws Exception {
 		HttpClient cli = HttpClient.newBuilder().version(Version.HTTP_2).build();
 
-		HttpRequest req = HttpRequest.newBuilder().uri(URI.create("http://" + webHost + "/" + urlBase + "/read/list")).GET().build();
+		HttpRequest req = HttpRequest.newBuilder().uri(URI.create("http://" + webHost + urlBase + "/read/list")).GET().build();
 
 		HttpResponse<String> resp = cli.send(req, BodyHandlers.ofString());
 		String body = resp.body();

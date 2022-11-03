@@ -1,12 +1,12 @@
 ---
 - name: Reload postgres
   service:
-    name: "postgresql@9.6-{{pgsql_cluster_name}}"
+    name: "postgresql@{{ pgsql_version }}-{{pgsql_cluster_name}}"
     state: reloaded
     enabled: yes
 
 - name: Restart postgres
   service:
-    name: "postgresql@9.6-{{pgsql_cluster_name}}"
+    name: "postgresql@{{ pgsql_version }}-{{pgsql_cluster_name}}"
     state: restarted
     enabled: yes
