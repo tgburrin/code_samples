@@ -6,16 +6,16 @@ webclient
 kafka_client
 
 [pgsql_database]
-database.tgburrin.net
+database01.tgburrin.net
 
 [kafka_queue]
-kafkaserver.tgburrin.net
+kafkaserver01.tgburrin.net
 
 [webserver]
-webserver.tgburrin.net
+webserver01.tgburrin.net
 
 [webclient]
-webclient.tgburrin.net
+webclient01.tgburrin.net
 
 [kafka_client]
-kafkaclient.tgburrin.net
+kafkaclient01.tgburrin.net

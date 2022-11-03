@@ -5,15 +5,14 @@
         "type": "static",
         "hostname": "database01",
         "port": 5432,
-        "username": "tgburrin",
-        "password": "junk_password",
-        "database": "tgburrin"
+        "username": "pageview",
+        "password": "password",
+        "database": "pageview"
     },
 
     "pageview_connection": {
-        "brokers": ["kafka01:9092"],
-        "topic": "messages",
+        "brokers": ["kafkaserver01:9092"],
+        "topic": "pageview",
         "debug": false
     }
 }
-

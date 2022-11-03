@@ -563,7 +563,7 @@ int main (int argc, char **argv) {
                 if ( msgtype == 0 || strcmp(msgtype->valuestring, "content_pageview") != 0 )
                     continue;
 
-                cJSON *id = cJSON_GetObjectItem(jsondoc, "id");
+                cJSON *id = cJSON_GetObjectItem(jsondoc, "content_id");
                 if ( id == 0 )
                     continue;
 

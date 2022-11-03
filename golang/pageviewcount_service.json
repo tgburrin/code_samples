@@ -1,17 +1,19 @@
 {
+    "logging_level": "debug",
+
     "pageview_connection": {
-        "brokers": ["kafkaserver.tgburrin.net:9092"],
-        "topic": "messages"
+        "brokers": ["kafkaserver01:9092"],
+        "topic": "pageview"
     },
 
     "content_connection": {
         "type": "static",
-        "hostname": "database.tgburrin.net",
+        "hostname": "database01",
         "ssl": false,
         "port": 5432,
-        "username": "tgburrin",
-        "password": "junk_password",
-        "database": "tgburrin"
+        "username": "pageview",
+        "password": "password",
+        "database": "pageview"
     },
 
     "table_configs": {

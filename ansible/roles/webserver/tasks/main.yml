@@ -4,4 +4,10 @@
   with_items:
     - gcc
 
-- shell: /installs/code_samples/golang/build.sh
+- name: "build golang web service"
+  shell: /installs/code_samples/golang/build.sh
+
+- name: "build java web service"
+  shell:
+    cmd: "/installs/code_samples/pageview_svc/gradlew build"
+    chdir: /installs/code_samples/pageview_svc

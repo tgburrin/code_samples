@@ -103,6 +103,12 @@ func formatJsonResponse(input map[string]interface{}) (rv string, err error) {
 	return
 }
 
+func formatJsonArrayResponse(input []interface{}) (rv string, err error) {
+	brv, err := json.Marshal(input)
+	rv = string(brv)
+	return
+}
+
 func MakeCreatedReponse(w http.ResponseWriter, location string) {
 	w.Header().Set("Location", location)
 	w.WriteHeader(http.StatusCreated)
@@ -119,6 +125,15 @@ func MakeDataResponse(w http.ResponseWriter, input map[string]interface{}) (err 
 		io.WriteString(w, jsonMsg+"\n")
 	}
 	return
+}
+
+func MakeDataArrayResponse(w http.ResponseWriter, input []interface{}) (err error) {
+        if jsonMsg, err := formatJsonArrayResponse(input); err != nil {
+                return err
+        } else {
+                io.WriteString(w, jsonMsg+"\n")
+        }
+        return
 }
 
 func MakeNotFoundResponse(w http.ResponseWriter, input map[string]interface{}) (err error) {

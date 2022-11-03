@@ -13,47 +13,69 @@
     validate_certs: no
     creates: "/opt/kafka_{{ kafka_version_full }}"
 
+- name: "Linking {{ kafka_version_full }} to 'kafka'"
+  ansible.builtin.file:
+    src: "/opt/kafka_{{ kafka_version_full }}"
+    dest: "/opt/kafka"
+    state: link
+
 - lineinfile:
-    path: "/opt/kafka_{{ kafka_version_full }}/config/server.properties"
+    path: "/opt/kafka/config/server.properties"
     regexp: "^[#]?delete.topic.enable=true"
     line: "delete.topic.enable=true"
 
 - lineinfile:
-    path: "/opt/kafka_{{ kafka_version_full }}/config/server.properties"
+    path: "/opt/kafka/config/server.properties"
     regexp: "^log.retention.hours"
     line: "log.retention.hours=24"
 
 - lineinfile:
-    path: "/opt/kafka_{{ kafka_version_full }}/config/server.properties"
+    path: "/opt/kafka/config/server.properties"
     regexp: "^[#]?listeners=PLAINTEXT://:9092"
     line: "listeners=PLAINTEXT://:9092"
 
 - lineinfile:
-    path: "/opt/kafka_{{ kafka_version_full }}/config/server.properties"
+    path: "/opt/kafka/config/server.properties"
     regexp: "^[#]?advertised.listeners="
     line: "advertised.listeners=PLAINTEXT://{{ ansible_fqdn }}:9092"
 
 - lineinfile:
-    path: "/opt/kafka_{{ kafka_version_full }}/bin/zookeeper-server-start.sh"
+    path: "/opt/kafka/bin/zookeeper-server-start.sh"
     insertafter: "^base_dir"
     firstmatch: yes
     line: "test -f /etc/default/zookeeper.sh && . /etc/default/zookeeper.sh"
 
 - lineinfile:
-    path: "/opt/kafka_{{ kafka_version_full }}/bin/kafka-server-start.sh"
+    path: "/opt/kafka/bin/kafka-server-start.sh"
     insertafter: "^base_dir"
     firstmatch: yes
     line: "test -f /etc/default/karka.sh && . /etc/default/karka.sh"
 
-- command: "/opt/kafka_{{ kafka_version_full }}/bin/zookeeper-server-start.sh -daemon /opt/kafka_{{ kafka_version_full }}/config/zookeeper.properties"
+- name: Copy systemd unit files
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+  with_items:
+    - zookeeper.service
+    - kafka.service
 
-- wait_for:
-    port: 2181
-    delay: 10
+      #- wait_for:
+      #    port: 2181
+      #    delay: 10
+      #    state: started
+
+- name: Enable zookeeper
+  service:
+    name: zookeeper
     state: started
+    enabled: yes
 
-- command: "/opt/kafka_{{ kafka_version_full }}/bin/kafka-server-start.sh -daemon /opt/kafka_{{ kafka_version_full }}/config/server.properties"
+- name: Enable kafka
+  service:
+    name: kafka
+    state: started
+    enabled: yes
 
 - shell: ./kafka-topics.sh --create --topic messages --if-not-exists --partitions 1 --replication-factor 1 --bootstrap-server localhost:9092
   args:
-    chdir: "/opt/kafka_{{ kafka_version_full }}/bin"
+    chdir: "/opt/kafka/bin"

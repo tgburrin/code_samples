@@ -19,7 +19,7 @@ func GetContentTableDef(processConfig common.ProcessConfiguration) (rv map[strin
 	for k, v := range processConfig.Settings["table_configs"].(map[string]interface{}) {
 		if k == "content" {
 			common.SetKey(rv, "table_name", k)
-                        if pk, ok := v.(map[string]interface{})["pk"]; ok {  
+                        if pk, ok := v.(map[string]interface{})["pk"]; ok {
                                 common.SetKey(rv, "pk", common.InterfaceToStringArray(pk))
                                 success = true
                         }
@@ -445,6 +445,7 @@ func FindManyContentHandler(processConfig common.ProcessConfiguration, w http.Re
 		common.MakeInternalErrorResponse(w, errMsg)
 		return
 	}
+	dbh.EnforceBatch = false
 
 	switch r.Method {
 	// Empty response
@@ -463,11 +464,12 @@ func FindManyContentHandler(processConfig common.ProcessConfiguration, w http.Re
 			return
 		}
 		if dbh.NumAffectedLastOp > 0 {
-			msg := make(map[string]interface{})
-			common.SetKey(msg, "data", dbh.Record)
-			common.SetKey(msg, "num", len(dbh.Record))
-			common.SetKey(msg, "next", dbh.RecordNextIdx)
-			common.MakeDataResponse(w, msg)
+			//msg := make(map[string]interface{})
+			//common.SetKey(msg, "data", dbh.Record)
+			//common.SetKey(msg, "num", len(dbh.Record))
+			//common.SetKey(msg, "next", dbh.RecordNextIdx)
+			//common.MakeDataResponse(w, msg)
+			common.MakeDataArrayResponse(w, dbh.Record)
 		} else {
 			common.MakeNotFoundResponse(w, make(map[string]interface{}))
 		}

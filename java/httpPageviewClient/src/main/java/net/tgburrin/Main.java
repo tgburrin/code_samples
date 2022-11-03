@@ -18,7 +18,7 @@ public class Main extends Thread {
 	private static AtomicInteger msgCounter = new AtomicInteger(0);
 	private static int statsTimeSec = 5;
 
-	private static String webHost = "localhost:8080";
+	private static String webHost = "webserver01:8080";
 	private static String apiVersion = "v1";
 	private static String urlBase = "/" + apiVersion + "/content";
 
@@ -65,20 +65,18 @@ public class Main extends Thread {
 	public static ArrayList<String> getContentIds() throws Exception {
 		HttpClient cli = HttpClient.newBuilder().version(Version.HTTP_2).build();
 
-		HttpRequest req = HttpRequest.newBuilder().uri(URI.create("http://" + webHost + "/" + urlBase + "/list")).GET().build();
+		HttpRequest req = HttpRequest.newBuilder().uri(URI.create("http://" + webHost + "/" + urlBase + "/read/list")).GET().build();
 
 		HttpResponse<String> resp = cli.send(req, BodyHandlers.ofString());
 		String body = resp.body();
 
 		if (resp.statusCode() != 200)
-			throw new Exception("Could not get content list ("+resp.statusCode()+"): " + body);
+			throw new Exception("Could not get content list: " + body);
 
 		ArrayList<String> contentIds = new ArrayList<String>();
 		JsonArray payload = (new JsonParser().parse(body)).getAsJsonArray();
-		if (payload.size() > 0) {
-			for (JsonElement cid : payload)
-				contentIds.add(cid.getAsJsonObject().get("id").getAsString());
-		}
+		for (JsonElement cid : payload)
+			contentIds.add(cid.getAsJsonObject().get("id").getAsString());
 
 		return contentIds;
 	}

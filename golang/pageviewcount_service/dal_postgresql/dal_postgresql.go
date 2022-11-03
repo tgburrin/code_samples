@@ -208,6 +208,7 @@ type postgresDataHandler struct {
 	dbh            *sql.DB
 	tableName      string
 	batchSize      int64
+	EnforceBatch   bool // Capitalized means a 'public' or 'exported' field
 	projection     map[string]interface{}
 	searchCriteria map[string]interface{}
 	sortDirection  string
@@ -274,6 +275,7 @@ func NewPostgresDataHandler(dbh *sql.DB,
 	pDH.searchCriteria = make(map[string]interface{})
 
 	pDH.batchSize = pDH.getDefaultBatchSize()
+	pDH.EnforceBatch = true
 	pDH.Record = make([]interface{}, 0)
 	pDH.sortDirection = pDH.getDefaultSortDirection()
 
@@ -290,7 +292,7 @@ func (pDH *postgresDataHandler) getDefaultSortDirection() (rv string) {
 }
 
 func (pDH *postgresDataHandler) getDefaultBatchSize() (rv int64) {
-	return 1000
+	return 10
 }
 
 func (pDH *postgresDataHandler) checkPrimaryKey() (err error) {
@@ -408,7 +410,9 @@ func (pDH *postgresDataHandler) FindRecord(args ...string) (err error) {
 		statement.WriteString(" " + field + " " + pDH.sortDirection)
 	}
 
-	statement.WriteString(" limit " + fmt.Sprint(pDH.batchSize+1))
+	if pDH.EnforceBatch == true {
+		statement.WriteString(" limit " + fmt.Sprint(pDH.batchSize+1))
+	}
 
 	pDH.dmlStatement = statement.String()
 
@@ -446,7 +450,7 @@ func (pDH *postgresDataHandler) FindRecord(args ...string) (err error) {
 		}
 		counter += 1
 
-		if counter <= pDH.batchSize {
+		if counter <= pDH.batchSize || !pDH.EnforceBatch {
 			pDH.Record = append(pDH.Record, row)
 		}
 	}

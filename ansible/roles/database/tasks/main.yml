@@ -13,7 +13,7 @@
     state: present
 
 # Debian specific
-- name: "Update Repository cache"
+- name: Update Repository cache
   apt:
     update_cache: true
     cache_valid_time: 3600
@@ -42,12 +42,7 @@
     dest: "{{ pgsql_cfg_path }}/postgresql.conf"
     line: "listen_addresses = '*'"
     insertbefore: "listen_addresses = 'localhost'"
-
-- name: Fix HBA
-  replace:
-    path: "{{ pgsql_cfg_path }}/pg_hba.conf"
-    regexp: '(^local.*|^host.*)(peer$|ident$)'
-    replace: '\1trust'
+  notify: Restart postgres
 
 - name: Add Valid Networks
   lineinfile:
@@ -60,24 +55,29 @@
     - "172.16.1.0/26"
     - "172.16.1.64/27"
     - "172.16.1.96/27"
+  notify: Restart postgres
 
-- name: Start postgres
-  service:
-    name: "postgresql@9.6-{{pgsql_cluster_name}}"
-    state: started
-    enabled: yes
+- name: Fix HBA
+  replace:
+    path: "{{ pgsql_cfg_path }}/pg_hba.conf"
+    regexp: '(^local.*|^host.*)(peer$|ident$)'
+    replace: '\1trust'
+  notify: Restart postgres
 
-- name: Reload postgres
-  service:
-    name: "postgresql@9.6-{{pgsql_cluster_name}}"
-    state: reloaded
-    enabled: yes
+- name: "Flush handlers"
+  meta: flush_handlers
+  #- name: Restart postgres
+  #  service:
+  #    name: "postgresql@9.6-{{pgsql_cluster_name}}"
+  #    state: restarted
+  #    enabled: yes
+  #  when: hba_changed is defined and hba_changed.changed
 
 - name: Create Users
   script: create_users.sh
 
 - name: Load Objects
-  shell: "psql -U tgburrin < /installs/code_samples/pgsql/content.sql"
+  shell: "psql -U pageview < /installs/code_samples/pgsql/content.sql"
 
 - name: Create basic content
   script: create_content.sh
