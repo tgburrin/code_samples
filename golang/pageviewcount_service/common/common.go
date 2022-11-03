@@ -65,9 +65,12 @@ func SetKey(dict map[string]interface{}, key string, value interface{}) (rv bool
 	return
 }
 
-func InterfaceToStringArray(input interface{}) (output []string) {
-	for _, v := range input.([]interface{}) {
-		output = append(output, v.(string))
+func InterfaceToStringArray(input_if interface{}) (output []string) {
+	input := input_if.([]interface{})
+	output = make([]string, len(input))
+	for i, v := range input {
+		output[i] = v.(string)
+		//output = append(output, v.(string))
 	}
 	return
 }

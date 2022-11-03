@@ -5,10 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/lib/pq"
 	"reflect"
 	"strconv"
 	"strings"
+
+	_ "github.com/lib/pq"
 )
 
 // General Functions
@@ -44,6 +45,8 @@ func NewPostgresCfg(loginDetails map[string]interface{}) (pCFG *PostgresCfg) {
 			pCFG.hostname = v.(string)
 		case "username":
 			pCFG.username = v.(string)
+		case "password":
+			pCFG.password = v.(string)
 		case "database":
 			pCFG.database = v.(string)
 		case "port":

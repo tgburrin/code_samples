@@ -6,13 +6,27 @@ import (
 	"log"
 	"net/http"
 	"reflect"
-
 	"github.com/gorilla/mux"
 
 	"../common"
 	"../dal_postgresql"
 	"../validation"
 )
+
+func GetContentTableDef(processConfig common.ProcessConfiguration) (rv map[string]interface{}, success bool) {
+	success = false
+	rv = make(map[string]interface{})
+	for k, v := range processConfig.Settings["table_configs"].(map[string]interface{}) {
+		if k == "content" {
+			common.SetKey(rv, "table_name", k)
+                        if pk, ok := v.(map[string]interface{})["pk"]; ok {  
+                                common.SetKey(rv, "pk", common.InterfaceToStringArray(pk))
+                                success = true
+                        }
+		}
+	}
+	return
+}
 
 func InsertContentHandler(processConfig common.ProcessConfiguration, w http.ResponseWriter, r *http.Request) {
 	conn, conerr := dal_postgresql.GetDatabaseHandleFromCfg(&processConfig.DbCfg)
@@ -403,6 +417,61 @@ func UpdateContentHandler(processConfig common.ProcessConfiguration, w http.Resp
 
 		return
 
+	default:
+		errMsg := make(map[string]interface{})
+		common.SetKey(errMsg, "msg", []string{"Invalid request method"})
+		common.MakeInvalidMethodResponse(w, errMsg)
+		return
+	}
+}
+
+func FindManyContentHandler(processConfig common.ProcessConfiguration, w http.ResponseWriter, r *http.Request) {
+	conn, conerr := dal_postgresql.GetDatabaseHandleFromCfg(&processConfig.DbCfg)
+
+	if conerr != nil {
+		log.Print(conerr.Error())
+		errMsg := make(map[string]interface{})
+		common.SetKey(errMsg, "msg", []string{conerr.Error()})
+		common.MakeInternalErrorResponse(w, errMsg)
+		return
+	}
+
+	contentTableDetails, _ := GetContentTableDef(processConfig)
+	dbh, dberr := dal_postgresql.NewPostgresDataHandler(conn, contentTableDetails)
+	if dberr != nil {
+		log.Print(dberr.Error())
+		errMsg := make(map[string]interface{})
+		common.SetKey(errMsg, "msg", []string{dberr.Error()})
+		common.MakeInternalErrorResponse(w, errMsg)
+		return
+	}
+
+	switch r.Method {
+	// Empty response
+	case "GET":
+		// args_str := r.FormValue("q")
+
+		findCriteria := make(map[string]interface{})
+		dbh.SetFindCriteria(findCriteria)
+
+		err := dbh.FindRecord("return_many", "reverse_sort")
+		if err != nil {
+			log.Print(err.Error())
+			errMsg := make(map[string]interface{})
+			common.SetKey(errMsg, "msg", []string{err.Error()})
+			common.MakeInternalErrorResponse(w, errMsg)
+			return
+		}
+		if dbh.NumAffectedLastOp > 0 {
+			msg := make(map[string]interface{})
+			common.SetKey(msg, "data", dbh.Record)
+			common.SetKey(msg, "num", len(dbh.Record))
+			common.SetKey(msg, "next", dbh.RecordNextIdx)
+			common.MakeDataResponse(w, msg)
+		} else {
+			common.MakeNotFoundResponse(w, make(map[string]interface{}))
+		}
+		return
 	default:
 		errMsg := make(map[string]interface{})
 		common.SetKey(errMsg, "msg", []string{"Invalid request method"})
