@@ -8,19 +8,20 @@
     #ami_id: "ami-46c1b650" #CentOS 7 marketplace ami
     cloud_provider: "aws"
     ami_id: "ami-09a41e26df464c548" # Debian 11
-    instance_type: "t2.nano"
+    # "t2.nano" - burstable intel
+    # "t3a.nano" - burstable amd epyc
+    instance_type: "t3a.micro"
 
   tasks:
     - debug: var=build_hosts
     - include_tasks: make_ec2_instance.yml
       with_items:
-         - { name: 'database', type: 'pgsql_database', num: 1 }
-         - { name: 'webserver', type: 'webserver', num: 1 }
-         - { name: 'webclient', type: 'webclient', num: 1 }
-         - { name: 'kafkaclient', type: 'kafka_client', num: 1 }
-         - { name: 'kafkaserver', type: 'kafka_queue', instance_type: "t2.small", num: 1 }
+         - { name: 'database', type: 'pgsql_database', instance_type: "r6a.large", num: 1 }
+         - { name: 'webserver', type: 'webserver', instance_type: "c6a.large", num: 1 }
+         - { name: 'webclient', type: 'webclient', instance_type: "c6a.large", num: 1 }
+         - { name: 'kafkaclient', type: 'kafka_client', instance_type: "c6a.large", num: 1 }
+         - { name: 'kafkaserver', type: 'kafka_queue', instance_type: "r6a.large", num: 1 }
            #- { name: 'citus', type: 'citus_database', num: 3 }
-           #- { name: 'kafkaserver', type: 'kafka_queue', num: 1 }
       loop_control:
         loop_var: inst
       when: build_hosts is defined and build_hosts == "true"
@@ -68,36 +69,50 @@
       when: ec2hostlist is defined
 
 - hosts: tag_automated_true
+  vars:
+    cloud_provider: "aws"
   roles:
     - role: common
       when: maintain_hosts is defined and maintain_hosts == "true"
 
 - hosts: tag_instance_type_pgsql_database
+  vars:
+    cloud_provider: "aws"
   roles:
     - common
     - database
 
 - hosts: tag_instance_type_kafka_client
+  vars:
+    cloud_provider: "aws"
   roles:
     - common
     - kafka_client
 
 - hosts: tag_instance_type_webserver
+  vars:
+    cloud_provider: "aws"
   roles:
     - common
     - webserver
 
 - hosts: tag_instance_type_kafka_queue
+  vars:
+    cloud_provider: "aws"
   roles:
     - common
     - kafka_server
 
 - hosts: tag_instance_type_webclient
+  vars:
+    cloud_provider: "aws"
   roles:
     - common
     - webclient
 
 - hosts: tag_instance_type_citus_database
+  vars:
+    cloud_provider: "aws"
   roles:
     - common
     - citus
