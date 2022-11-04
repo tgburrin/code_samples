@@ -7,20 +7,22 @@
     #ami_id: "ami-a4c7edb2"
     #ami_id: "ami-46c1b650" #CentOS 7 marketplace ami
     cloud_provider: "aws"
-    ami_id: "ami-09a41e26df464c548" # Debian 11
+    #ami_id: "ami-09a41e26df464c548" # Debian 11 x86_64
+    ami_id: "ami-0d51fb3c91fde05a2" # Debian 11 arm64
     # "t2.nano" - burstable intel
     # "t3a.nano" - burstable amd epyc
-    instance_type: "t3a.micro"
+    # "t4g.small" - arm64 (graviton)
+    instance_type: "t4g.small"
 
   tasks:
     - debug: var=build_hosts
     - include_tasks: make_ec2_instance.yml
       with_items:
-         - { name: 'database', type: 'pgsql_database', instance_type: "r6a.large", num: 1 }
-         - { name: 'webserver', type: 'webserver', instance_type: "c6a.large", num: 1 }
-         - { name: 'webclient', type: 'webclient', instance_type: "c6a.large", num: 1 }
-         - { name: 'kafkaclient', type: 'kafka_client', instance_type: "c6a.large", num: 1 }
-         - { name: 'kafkaserver', type: 'kafka_queue', instance_type: "r6a.large", num: 1 }
+         - { name: 'database', type: 'pgsql_database', root_size: 12, num: 1 }
+         - { name: 'webserver', type: 'webserver', num: 1 }
+         - { name: 'webclient', type: 'webclient', num: 1 }
+         - { name: 'kafkaclient', type: 'kafka_client', num: 1 }
+         - { name: 'kafkaserver', type: 'kafka_queue', instance_type: "t4g.medium", num: 1 }
            #- { name: 'citus', type: 'citus_database', num: 3 }
       loop_control:
         loop_var: inst

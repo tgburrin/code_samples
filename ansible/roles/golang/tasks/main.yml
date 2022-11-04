@@ -5,7 +5,7 @@
 
 - name: decompress go
   ansible.builtin.unarchive:
-    src: https://go.dev/dl/go1.19.2.linux-amd64.tar.gz
+    src: https://go.dev/dl/go1.19.2.linux-arm64.tar.gz # x86 go1.19.2.linux-amd64.tar.gz
     dest: /usr/local/
     remote_src: yes
 

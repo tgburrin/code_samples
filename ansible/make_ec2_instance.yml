@@ -21,6 +21,11 @@
         cloud_provider: "aws"
         automated: "true"
      termination_protection: false
+     volumes:
+       - device_name: /dev/xvda
+         ebs:
+           volume_size: "{{ inst.root_size|default(8) }}"
+           delete_on_termination: true
      vpc_subnet_id: "subnet-e389cbb9"
      wait: true
   register: ec2
