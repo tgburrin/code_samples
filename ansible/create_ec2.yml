@@ -18,12 +18,12 @@
     - debug: var=build_hosts
     - include_tasks: make_ec2_instance.yml
       with_items:
-         - { name: 'database', type: 'pgsql_database', root_size: 12, num: 1 }
-         - { name: 'webserver', type: 'webserver', num: 1 }
-         - { name: 'webclient', type: 'webclient', num: 1 }
-         - { name: 'kafkaclient', type: 'kafka_client', num: 1 }
-         - { name: 'kafkaserver', type: 'kafka_queue', instance_type: "t4g.medium", num: 1 }
-           #- { name: 'citus', type: 'citus_database', num: 3 }
+              - { name: 'database', type: 'pgsql_database', instance_type: "im4gn.large", root_size: 12, num: 1 }
+              - { name: 'webserver', type: 'webserver', instance_type: "t4g.medium", num: 1 }
+              - { name: 'webclient', type: 'webclient', num: 1 }
+              - { name: 'kafkaclient', type: 'kafka_client', num: 1 }
+              - { name: 'kafkaserver', type: 'kafka_queue', instance_type: "im4gn.large", num: 1 }
+                #- { name: 'citus', type: 'citus_database', num: 3 }
       loop_control:
         loop_var: inst
       when: build_hosts is defined and build_hosts == "true"
